@@ -1,0 +1,60 @@
+Logging
+---------
+use zend framework
+added functionality:
+- output writes to files/page/firebug
+- logging config per user
+- logging per IP
+- logging identifiers
+
+MVC Zend
+--------------
+I hock into the MVC Zend Framework. But the logic of building the response object is in BaseXMS.
+BaseXMS is building a response object and sends it back to the Zend MVC. Zend just translate the response object
+into an Zend response.
+
+BaseXMS Objects
+--------------------
+The factory takes the xml element from the content tag.
+
+Persistent Object API
+========================
+Build an API to handle write/read of content objects and path nodes.
+
+
+Templates
+===========
+use php templates
+find a solution for collecting data and then change template beginning content
+
+
+Settings
+=============
+Use zend module settings - order matters here. Then you can override with global settings.
+In addition I'd like to override the settings in the request/siteaccess context. I don't think I need
+to have an override for all siteaccess.
+
+
+Execution Flow
+=================
+1) public/index.php
+   - gets zend application instance
+   - BaseXML overrides the standard zend application
+   
+2) application instance
+   - add a onDispatch listener
+   - gets a siteaccess instance
+   - asks the siteaccess instance for a Response 
+   
+3) siteaccess instance
+   - get the configuration
+   - setups a ServiceManager
+   - uses the UrlDispatcher in order to resolve the request
+   - a valid request create a RequestHandler instance and gets a reference ID to the object in XML data
+   - ask the RequestHandler for a response
+   
+4) The RequestHandler
+   - just send back a response object or
+   - fetches the content from the XML data
+   - use UIComponents to parse the response content
+   

@@ -1,0 +1,79 @@
+<node id='1' path='' class='\BaseXMS\RequestHandler\RequestHandler'>
+	<content class='\BaseXMS\ContentObject\HtmlPage'>
+		<meta>
+			<foo>bar</foo>
+		</meta>
+		<raw>
+			Hello <b>beautiful</b> World!!
+		</raw>
+	</content>
+
+	<node id='2' path='usa' class='\BaseXMS\RequestHandler\RequestHandler'>
+		<properties>
+			<altPaths>
+				<entry path='usa2' />
+				<entry path='usa3' />
+			</altPaths>
+			
+			<oldPaths>
+				<entry path='usa4'>usa</entry>
+			</oldPaths>
+		</properties>
+		
+		<content class='Application\Controller\Simple'>
+			<raw>Hello tree.</raw>
+		</content>
+
+		<node id='3' path='politics' class='\BaseXMS\RequestHandler\RequestHandler'>
+			<properties>
+				<altPaths>
+					<entry path='politics2' />
+				</altPaths>
+				
+				<altFullPaths>
+					<entry path='/fips/tests/politics' />
+				</altFullPaths>
+				
+				<oldPaths>
+					<entry path='politics3'>politics2</entry>
+				</oldPaths>
+
+				<oldFullPaths>
+					<entry path='/fips/tests/politics3' />
+				</oldFullPaths>
+			</properties>
+
+			<content class='Application\Controller\Base'>
+				<raw>
+					Hello Politics
+				</raw>
+			</content>
+		</node>
+
+		<node id='5' path='Halloween' class='\BaseXMS\RequestHandler\UiComposer'>
+			<content class='Application\Controller\Base'>
+				<raw>
+					See all pictures
+				</raw>
+			</content>
+		</node>
+
+	</node>
+	
+	<node id='4' path='world' class='\Sandbox\RequestHandler\FullPage'>
+
+		<properties>
+			<altPaths>
+				<entry path='world2' />
+			</altPaths>
+			
+			<oldPaths>
+				<entry path='welt'>world2</entry>
+			</oldPaths>
+		</properties>
+
+		<content class='\BaseXMS\UiComponent\TextLine'>
+			<raw>Hello World news.</raw>
+		</content>
+	</node>
+</node>
