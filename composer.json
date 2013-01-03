@@ -1,0 +1,10 @@
+{
+    "name":        "pkamps/BaseXMS",
+    "description": "BaseXMS framework",
+    "version":     "0.1",
+    "homepage": "http://www.mugo.ca",
+    "licence": "GPL-2.0",
+    "require": {
+        "php": ">=5.3.1"
+    }
+}
