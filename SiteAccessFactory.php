@@ -2,10 +2,15 @@
 
 namespace BaseXMS;
 
+use Zend\ServiceManager\ServiceLocatorInterface;
+
 class SiteAccessFactory
 {
-	public static function factory( $context = '', $siteaccesses = null, $application = null )
+	public static function factory( ServiceLocatorInterface $serviceLocator, $context = '' )
 	{
+		$appConfig = $serviceLocator->get( 'application' )->getConfig();
+		$siteaccesses = isset( $appConfig[ 'siteaccesses' ] ) ? $appConfig[ 'siteaccesses' ] : array();
+		
 		$class = '\BaseXMS\SiteAccess';
 		
 		if( !empty( $siteaccesses ) )
@@ -16,11 +21,17 @@ class SiteAccessFactory
 				{
 					$class = $siteaccesses[ $context ];
 				}
+				else
+				{
+					$serviceLocator->get( 'log' )->warn( 'Unable to load siteaccess: ' . $class );
+				}
 			}
 		}
 		
+		$serviceLocator->get( 'log' )->info( 'Loading siteaccess: ' . $class );
+		
 		$instance = new $class;
-		$instance->init( $application );
+		$instance->init( $serviceLocator );
 		
 		return $instance;
 	}

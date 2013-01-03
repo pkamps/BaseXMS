@@ -22,17 +22,37 @@ Persistent Object API
 Build an API to handle write/read of content objects and path nodes.
 
 
-Templates
-===========
-use php templates
-find a solution for collecting data and then change template beginning content
+No templates but parsing xhtml structure
+===========================================
+I decided to not use a template engine that executes the template code from top to bottom. Instead I'm using a UiComposer
+which build the xhtml dom document recursively. Each recursive step is using a UiComponent to build parts of the dom document.
+That part could use "<include type="article" />" tags to trigger another recursive step in the UiComposer.
 
 
 Settings
 =============
-Use zend module settings - order matters here. Then you can override with global settings.
-In addition I'd like to override the settings in the request/siteaccess context. I don't think I need
-to have an override for all siteaccess.
+The inspect module has a page to dump out settings "/admin/settings".
+
+Setting files:
+- BaseXMS ignores application.config.php (pure Zend settings)
+- merges all module.config.php files (module order matters here)
+- siteaccess class has a method addConfig to set additional settings
+- Override with global settings (not sure if I have that implemented)
+
+Use Cases:
+a) DB settings for all siteaccesses
+Don't set it in siteaccess contenxt, just in a custom Zend module
+
+b) Custom design in a siteaccess
+Add config in context of the siteaccess
+
+c) Have base config
+Add it to the module BaseXMSZend
+
+Things to consider:
+Do I need the ability to override settings for a specific request?
+It probably would be cleaner to have the site context decide which zend module to load but I don't think it's easy to
+override that logic (but I haven't check).
 
 
 Execution Flow
@@ -58,3 +78,6 @@ Execution Flow
    - fetches the content from the XML data
    - use UIComponents to parse the response content
    
+   
+TODO: I think the siteaccess and request handler should take the application object and add more details to it.
+In general I should try to pass along the service object (which contains the application).

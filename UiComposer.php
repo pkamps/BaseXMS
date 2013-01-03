@@ -5,32 +5,71 @@ namespace BaseXMS;
 use BaseXMS\SimpleXMLElement as SimpleXMLElement;
 
 /*
+ * Recursively composes a page
  */
 class UiComposer
 {
+	/*
+	 *  Return is build in $doc
+	 */
 	private $doc;
+	
+	/*
+	 * UiCollection of all components for a request
+	 */
+	private $uiComponents;
+
+	/*
+	 * Constructor gets the data from outside 
+	 */
+	private $data;
+	
+	/*
+	 * Data collected during parsing UiComponents
+	 */
+	private $sharedData;
+	
+	
+	private $xpath;
+	private $services;
+	
 	private static $buildExecutionCount = 0;
 	
-	public function __construct( $services, $id )
+	/**
+	 * @param unknown_type $services
+	 * @param unknown_type $id
+	 */
+	public function __construct( $services, $data )
 	{
+		//TODO: Should I create a class?
+		$this->sharedData = new \stdClass;
+		
 		$this->services = $services;
-		$this->id = $id;
+		$this->data = $data;
 
 		// Build base doc
 		$domImpl = new \DOMImplementation();
 		$doctype   = $domImpl->createDocumentType( 'html' );
 		$this->doc = $domImpl->createDocument( null, 'include', $doctype );
-		$this->doc->lastChild->setAttribute( 'class', '\BaseXMS\UiComponent\Html' );
+		$this->doc->lastChild->setAttribute( 'type', 'html' );
 		
 		$this->xpath = new \DOMXpath( $this->doc );
 	}
 	
 	public function run()
 	{
-		return $this->build( $this->doc->firstChild );
+		$this->buildDoc( $this->doc->firstChild );
+		$this->rerender();
+		
+		return $this;
 	}
 	
-	public function build( $element )
+	/**
+	 * @param \DOMNode $element
+	 * @throws \Exception
+	 * @return Ambiguous
+	 */
+	protected function buildDoc( \DOMNode $element )
 	{
 		self::$buildExecutionCount++;
 		
@@ -45,18 +84,24 @@ class UiComposer
 			{
 				foreach( $includes as $include )
 				{
+					$includeType = $include->getAttribute( 'type' );
 					
-					$includeClass = $include->getAttribute( 'class' );
-					$this->services->get( 'log' )->info( 'Load UiComponent: ' . $includeClass );
+					//TODO: consider to send $this instead of services
+					$uiComponent = UiComponent\Factory::factory( $this->services, $includeType, $this->data );
 					
-					$uiComponent = UiComponent\Factory::factory( $this->services, $includeClass, $this->id );
-					
-					$subElement = $uiComponent->getXml();
+					/*
+					 * Add UiComponent xml
+					 */
+					$result = $uiComponent->render( $this, $include );
+
 					// need to import before we can replace it
-					$subElement = $this->doc->importNode( $subElement, true );
-					$include->parentNode->replaceChild( $subElement, $include );
-	
-					$this->build( $subElement );
+					$result = $this->doc->importNode( $result, true );
+					$include->parentNode->replaceChild( $result, $include );
+					
+					// Add component to list
+					$this->uiComponents[] = $uiComponent;
+					
+					$this->buildDoc( $result );
 				}
 			}
 		}
@@ -68,12 +113,42 @@ class UiComposer
 		return $this;
 	}
 	
+	protected function rerender()
+	{
+		if( !empty( $this->uiComponents ) )
+		{
+			//TODO: consider multiple loops until all components say needsRerender false.
+			foreach( $this->uiComponents as $uiComponent )
+			{
+				if( $uiComponent->needsRerender )
+				{
+					$uiComponent->rerender( $this );
+				}
+			}
+		}
+	}
+	
 	public function output()
 	{
 		
 		// won't work - php bug
 		$this->doc->formatOutput = true;
 		return $this->doc->saveHTML();
+	}
+	
+	public function getDoc()
+	{
+		return $this->doc;
+	}
+	
+	public function getSharedData()
+	{
+		return $this->sharedData;
+	}
+
+	public function getServices()
+	{
+		return $this->services;
 	}
 }
 

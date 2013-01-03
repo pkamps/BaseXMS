@@ -4,35 +4,72 @@ namespace BaseXMS\UiComponent;
 
 class Factory
 {
-	public static function factory( $services, $class, $data )
+	public static function factory( $services, $type, $data )
 	{
-		$test = array(
-				'class' => $class,
-				'')
-		$rules = self::getRules();
+		$class = self::xpathMatch( self::getXPathContext( $type, $data ), self::getRules() );
 		
-		foreach( $rules as $concreteClass => $rule )
+		if( !class_exists( $class ) )
 		{
-			if( count( array_intersect( $entry, $event ) ) == count( $entry ) )
-			{
-				$return = true;
-				break;
-			}
+			$services->get( 'log' )->warn( 'Unknown UiComponent: ' . $class );
+			$class = '\BaseXMS\UiComponent\UiComponent';
 		}
 		
-		$class = class_exists( $class ) ? $class : '\BaseXMS\UiComponent\UiComponent';
-
-		$model = new $class;
-		$model->init( $services, $data );
+		$services->get( 'log' )->info( 'Loading UiComponent: ' . $class );
 		
-		return $model;
+		$component = new $class;
+		$component->init( $data );
+		
+		return $component;
 	}
 	
 	private static function getRules()
 	{
+		//TODO: move to settings
 		return array(
-				'Html' => array( 'class' => '\BaseXMS\UiComponent\Html' )
+				'\BaseXMSInspect\UiComponent\Settings' => '/context[./type/text() = "content" and ./id/text() = "7"]',
+				'\BaseXMS\UiComponent\Html'            => '/context/type[text() = "html"]',
+				'\BaseXMS\UiComponent\Head'            => '/context/type[text() = "head"]',
+				'\BaseXMS\UiComponent\Body'            => '/context/type[text() = "body"]',
+				'\BaseXMS\UiComponent\Debug'           => '/context/type[text() = "debug"]',
+				'\BaseXMS\UiComponent\Content'         => '/context/type[text() = "content"]',
+				'\BaseXMS\UiComponent\Head\InlineCss'  => '/context/type[text() = "inline-css"]'
 		);
+	}
+	
+	private static function getXPathContext( $type, $data )
+	{
+		$context =
+'<context>
+	<type>'. $type .'</type>
+	<id>'. $data->attributes()->id . '</id>
+</context>';
+
+		//	<raw>'. $data->raw->saveXML() . '</raw>
+		
+		$doc = new \DOMDocument();
+		$doc->loadXML( $context );
+		return new \DOMXpath( $doc );
+	}
+	
+	private static function xpathMatch( $xPathObj, $tests )
+	{
+		$return = false;
+		
+		if( !empty( $tests ) )
+		{
+			foreach( $tests as $key => $test )
+			{
+				$result = $xPathObj->query( $test );
+				
+				if( $result->length )
+				{
+					$return = $key;
+					break;
+				}
+			}
+		}
+		
+		return $return;
 	}
 }
 

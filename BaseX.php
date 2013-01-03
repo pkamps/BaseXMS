@@ -38,7 +38,7 @@ class BaseX
 	{
 		$this->log = $services->get( 'log' );
 		
-		$config = $services->get( 'siteaccess' )->getConfig();
+		$config = $services->get( 'application' )->getConfig();
 		
 		if( !empty( $config[ 'BaseX' ] ) )
 		{

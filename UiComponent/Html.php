@@ -2,20 +2,20 @@
 
 namespace BaseXMS\UiComponent;
 
-class Html extends UiComponent
+use BaseXMS\UiComposer;
+
+class Html extends HtmlWidget
 {
-	public function getXml()
+	/**
+	 * @return DOMNode
+	 */
+	public function getXml( UiComposer $composer )
 	{
-		$content =
+		return
 '<html>
-	<include class="\BaseXMS\UiComponent\Head"></include>
-	<include class="\BaseXMS\UiComponent\Body"></include>
+	<include type="head"></include>
+	<include type="body"></include>
 </html>';
-		
-		$doc = new \DOMDocument();
-		$doc->loadXML( $content );
-		
-		return $doc->firstChild;
 	}
 }
 

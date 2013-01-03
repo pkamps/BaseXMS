@@ -2,31 +2,43 @@
 
 namespace BaseXMS\UiComponent;
 
+use BaseXMS\UiComposer;
+
 class UiComponent
 {
-	protected $services;
 	protected $data;
+	public $needsRerender = false;
 	
-	public function init( $services, $data )
+	public function init( $data )
 	{
-		$this->services = $services;
-		$this->data     = $data;
+		$this->data = $data;
 	}
 	
-	public function render( $format )
+	/**
+	 * @param UiComposer $composer
+	 * @return DOMNode
+	 */
+	public function render( UiComposer $composer, $element )
 	{
-		return '<pre>' . print_r( $this->data, true ) . '</pre>';
-	}
-	
-	public function getXml()
-	{
-		$content =
-		'<span>Default from UiComponent</span>';
+		/* not sure what to do here
+		$content = '<span>Default from UiComponent</span>';
 		
 		$doc = new \DOMDocument();
 		$doc->loadXML( $content );
 		
 		return $doc->firstChild;
+		*/
+	}
+	
+	/**
+	 * @param UiComposer $composer
+	 * @return \BaseXMS\UiComponent\UiComponent
+	 */
+	public function rerender( UiComposer $composer )
+	{
+		$this->needsRerender = false;
+		
+		return $this;
 	}
 }
 

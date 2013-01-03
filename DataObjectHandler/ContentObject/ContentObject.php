@@ -1,6 +1,6 @@
 <?php 
 
-namespace BaseXMS\DataObjectHandler;
+namespace BaseXMS\DataObjectHandler\ContentObject;
 
 use BaseXMS\DataObjectHandler\DataObjectHandler;
 
@@ -33,7 +33,7 @@ class ContentObject extends DataObjectHandler
 		return $return;
 	}
 	
-	function read( $id )
+	public function read( $id )
 	{
 		$query = '//node[@id="' . $id . '"]/content';
 		
@@ -44,7 +44,7 @@ class ContentObject extends DataObjectHandler
 		return $data;
 	}
 	
-	function update( $node )
+	public function update( $node )
 	{
 		$return = false;
 		
@@ -65,7 +65,7 @@ class ContentObject extends DataObjectHandler
 		return $return;
 	}
 	
-	function delete( $id )
+	public function delete( $id )
 	{
 		die('nyi');
 		

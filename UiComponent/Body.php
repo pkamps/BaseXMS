@@ -2,17 +2,17 @@
 
 namespace BaseXMS\UiComponent;
 
-class Body extends UiComponent
+use BaseXMS\UiComposer;
+
+class Body extends HtmlWidget
 {
-	public function getXml()
+	public function getXml( UiComposer $composer )
 	{
-		$content =
-'<body>Hello World.</body>';
-		
-		$doc = new \DOMDocument();
-		$doc->loadXML( $content );
-		
-		return $doc->firstChild;
+		return
+'<body>
+	<include type="content" />
+	<include type="debug" />
+</body>';
 	}
 }
 

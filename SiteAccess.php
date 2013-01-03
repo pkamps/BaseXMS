@@ -3,6 +3,7 @@
 namespace BaseXMS;
 
 use Zend\ServiceManager\ServiceManager;
+use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\EventManager\EventManager;
 use Zend\Http\PhpEnvironment\Response as ZendResponse;
 use Zend\Config\Config;
@@ -22,21 +23,25 @@ class SiteAccess
 		}
 	}
 	
-	
-	public function init( $application )
+	public function init( ServiceLocatorInterface $serviceLocator )
 	{
+		$application = $serviceLocator->get( 'application' );
+
 		// Add siteaccess specific config
-		$appConfig = is_object( $application ) ? $application->getConfig() : array(); 
-		$configHandler = new Config( $appConfig );
+		$configHandler = new Config( $application->getConfig() );
 		$configHandler->merge( $this->addConfig() );
+
+		//TODO: avoid config in context of the siteaccess
 		$this->config = $configHandler->toArray();
 		
-		$this->baseXMSServices = new ServiceManager();
-		$this->baseXMSServices->setService( 'application', $application );
-		$this->baseXMSServices->setService( 'siteaccess', $this );
-		$this->baseXMSServices->setService( 'accumulator', new Accumulator() );
-		$this->baseXMSServices->setFactory( 'log', 'BaseXMS\Log\Factory' );
-		$this->baseXMSServices->setFactory( 'xmldb', 'BaseXMS\BaseXFactory' );
+		$application->getServiceManager()->setService( 'accumulator', new Accumulator() );
+		$application->getServiceManager()->setFactory( 'xmldb', 'BaseXMS\BaseXFactory' );
+		
+		//TODO: remove all references to baseXMSServices
+		$this->baseXMSServices = $application->getServiceManager();
+		
+		// not needed I think
+		#$this->baseXMSServices->setService( 'siteaccess', $this );
 	}
 	
 	public function getBaseXMSServices()
@@ -46,14 +51,13 @@ class SiteAccess
 	
 	/*
 	 * building a Zend response object
+	 * TODO: consider to move more lgic inside the RequestHandler factory
 	*/
-	public function getResponse( $path )
+	public function getResponse( ServiceLocatorInterface $serviceLocator, $path )
 	{
-		//print_r( $this->baseXMSServices->get( 'application')->getConfig() );
-		
-		$this->baseXMSServices->get( 'log' )->info( 'Build Response' );
+		$serviceLocator->get( 'log' )->info( 'Build Response' );
 	
-		$urlDispatcher = new UrlDispatcher( $this->baseXMSServices );
+		$urlDispatcher = new UrlDispatcher( $serviceLocator );
 		$baseXMSResponse = $urlDispatcher->dispatch( $path );
 	
 		$response = new ZendResponse();
@@ -115,12 +119,8 @@ class SiteAccess
 	
 		$response->setReasonPhrase( $response->getReasonPhrase() ); // set default phrase
 	
-		$this->baseXMSServices->get( 'accumulator' )->start( 'BaseXMS', BASEXMS_START );
-		$this->baseXMSServices->get( 'accumulator' )->stop( 'BaseXMS' );
-	
-		$this->outputLog();
-	
-		echo $this->baseXMSServices->get( 'accumulator')->getDataAsHtml();
+		$serviceLocator->get( 'accumulator' )->start( 'BaseXMS', BASEXMS_START );
+		$serviceLocator->get( 'accumulator' )->stop( 'BaseXMS' );
 	
 		return $response;
 	}
@@ -130,26 +130,13 @@ class SiteAccess
 		return $this->config;
 	}
 	
+	/**
+	 * Add siteaccess related config. It overrides/adds to the module config.
+	 * 
+	 * @return \Zend\Config\Config
+	 */
 	protected function addConfig()
 	{
 		return new Config( array() );
 	}
-	
-	private function outputLog()
-	{
-		$formatter = new Log\Formatter\Html;
-	
-		// TODO: loop over writers and print out all Mock writer content
-		$events = $this->baseXMSServices->get( 'log' )->getWriters()->top()->events;
-	
-		if( !empty( $events ) )
-		{
-			foreach( $events as $event )
-			{
-				echo '<ul>';
-				echo $formatter->format( $event );
-				echo '</ul>';
-			}
-		}
-	}	
 }

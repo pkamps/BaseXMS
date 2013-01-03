@@ -3,12 +3,15 @@
 namespace BaseXMS\RequestHandler;
 
 use Zend\Http\PhpEnvironment\Response as ZendResponse;
+use BaseXMS\DataObjectHandler\ContentObject\ContentObject;
 
 class UiComposer extends RequestHandler
 {
 	public function getResponse()
 	{
-		$uiComposer = new \BaseXMS\UiComposer( self::$baseXMLServices, $this->id );
+		$contentObjectHandler = new ContentObject( self::$baseXMLServices );
+		
+		$uiComposer = new \BaseXMS\UiComposer( self::$baseXMLServices, $contentObjectHandler->read( $this->id ) );
 				
 		$response = new ZendResponse();
 		$response->setContent( $uiComposer->run()->output() );

@@ -22,6 +22,9 @@ class Application extends ZendApplication
 		
 		// shortcut the control lookup
 		$this->getEventManager()->attach( MvcEvent::EVENT_DISPATCH, array( $this, 'onDispatch' ) );
+		
+		//TODO: moving to a dedicated function
+		$this->serviceManager->setFactory( 'log', 'BaseXMS\Log\Factory' );
 	}
 	
 	public function onDispatch( $e )
@@ -46,18 +49,12 @@ class Application extends ZendApplication
 	
 	public function dispatch( Request $request, Response $response = null, $routeMatch )
 	{
-		//TODO: better place for a siteacces factory configuration?
-		$appConfig = $this->getServiceManager()->get( 'ApplicationConfig' );
-				
-		$siteaccesses = isset( $appConfig[ 'siteaccesses' ] ) ? $appConfig[ 'siteaccesses' ] : array();
+		$siteAccess = SiteaccessFactory::factory( 
+				$this->getServiceManager(),
+				$routeMatch->getParam( 'context' )
+		);
 		
-		$siteAccess = SiteaccessFactory::factory( $routeMatch->getParam( 'context' ),
-		                                          $siteaccesses,
-		                                          $this );
-		
-		$baseXMSResponse = $siteAccess->getResponse( $routeMatch->getParam( 'path' ) );
-		
-		return $baseXMSResponse;
+		return $siteAccess->getResponse( $this->getServiceManager(), $routeMatch->getParam( 'path' ) );
 	}	
 }
 

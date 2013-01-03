@@ -1,5 +1,5 @@
 <node id='1' path='' class='\BaseXMS\RequestHandler\RequestHandler'>
-	<content class='\BaseXMS\ContentObject\HtmlPage'>
+	<content class=''>
 		<meta>
 			<foo>bar</foo>
 		</meta>
@@ -20,7 +20,7 @@
 			</oldPaths>
 		</properties>
 		
-		<content class='Application\Controller\Simple'>
+		<content class=''>
 			<raw>Hello tree.</raw>
 		</content>
 
@@ -43,7 +43,7 @@
 				</oldFullPaths>
 			</properties>
 
-			<content class='Application\Controller\Base'>
+			<content class=''>
 				<raw>
 					Hello Politics
 				</raw>
@@ -51,7 +51,7 @@
 		</node>
 
 		<node id='5' path='Halloween' class='\BaseXMS\RequestHandler\UiComposer'>
-			<content class='Application\Controller\Base'>
+			<content class=''>
 				<raw>
 					See all pictures
 				</raw>
@@ -72,8 +72,21 @@
 			</oldPaths>
 		</properties>
 
-		<content class='\BaseXMS\UiComponent\TextLine'>
+		<content class=''>
 			<raw>Hello World news.</raw>
 		</content>
+	</node>
+	
+	<node id='6' path='admin' class='\BaseXMS\RequestHandler\UiComposer'>
+		<content class=''>
+			<raw>
+				<a href="/admin/settings">Settings</a>
+			</raw>
+		</content>
+		
+		<node id='7' path='settings' class='\BaseXMS\RequestHandler\UiComposer'>
+			<content class=''></content>
+		</node>
+		
 	</node>
 </node>

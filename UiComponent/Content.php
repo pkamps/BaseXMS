@@ -1,17 +1,14 @@
 <?php 
 
 namespace BaseXMS\UiComponent;
+
 use BaseXMS\UiComposer;
 
-class Head extends HtmlWidget
+class Content extends HtmlWidget
 {
 	public function getXml( UiComposer $composer )
 	{
-		return
-'<head>
-	<title>Default page title</title>
-	<include type="inline-css" />
-</head>';
+		return '<div id="content">' . $this->data->raw->saveXML() . '</div>';
 	}
 }
 

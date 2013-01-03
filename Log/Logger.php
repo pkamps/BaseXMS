@@ -25,7 +25,7 @@ class Logger extends \Zend\Log\Logger
 		
 		$extra = array_merge( $extra, $caller );
 		
-		return parent::log( Logger::INFO, $message, $extra );
+		return parent::log( $priority, $message, $extra );
 	}
 }
 
