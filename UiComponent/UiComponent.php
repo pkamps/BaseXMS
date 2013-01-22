@@ -6,19 +6,16 @@ use BaseXMS\UiComposer;
 
 class UiComponent
 {
-	protected $data;
+	protected $composer;
+	protected $incElement;
+	
 	public $needsRerender = false;
-	
-	public function init( $data )
-	{
-		$this->data = $data;
-	}
-	
+		
 	/**
 	 * @param UiComposer $composer
 	 * @return DOMNode
 	 */
-	public function render( UiComposer $composer, $element )
+	public function render()
 	{
 		/* not sure what to do here
 		$content = '<span>Default from UiComponent</span>';
@@ -34,12 +31,32 @@ class UiComponent
 	 * @param UiComposer $composer
 	 * @return \BaseXMS\UiComponent\UiComponent
 	 */
-	public function rerender( UiComposer $composer )
+	public function rerender()
 	{
 		$this->needsRerender = false;
-		
 		return $this;
 	}
+	
+	/**
+	 * @param UiComposer $composer
+	 * @return \BaseXMS\UiComponent\UiComponent
+	 */
+	public function setComposer( UiComposer $composer )
+	{
+		$this->composer = $composer;
+		return $this;
+	}
+
+	/**
+	 * @param unknown_type $element
+	 * @return \BaseXMS\UiComponent\UiComponent
+	 */
+	public function setIncElement( $element )
+	{
+		$this->incElement = $element;
+		return $this;
+	}
+	
 }
 
 ?>

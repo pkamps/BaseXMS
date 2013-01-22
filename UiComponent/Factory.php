@@ -2,11 +2,24 @@
 
 namespace BaseXMS\UiComponent;
 
+use BaseXMS\Stdlib\DOMXpath;
+
 class Factory
 {
-	public static function factory( $services, $type, $data )
+	static $rules;
+	
+	/**
+	 * 
+	 * @param UiComposer $composer
+	 * @param DomElement $incElement
+	 * @return UiComponent
+	 */
+	public static function factory( $composer, $incElement )
 	{
-		$class = self::xpathMatch( self::getXPathContext( $type, $data ), self::getRules() );
+		$services = $composer->getServices();
+		
+		$xpath = self::getXPathContext( $incElement, $composer->getData() );
+		$class = $xpath->getFirstMatchingXpath( self::getRules( $services ) );
 		
 		if( !class_exists( $class ) )
 		{
@@ -17,59 +30,57 @@ class Factory
 		$services->get( 'log' )->info( 'Loading UiComponent: ' . $class );
 		
 		$component = new $class;
-		$component->init( $data );
+		$component->setComposer( $composer );
+		$component->setIncElement( $incElement );
 		
 		return $component;
 	}
 	
-	private static function getRules()
+	private static function getRules( $services )
 	{
-		//TODO: move to settings
-		return array(
-				'\BaseXMSInspect\UiComponent\Settings' => '/context[./type/text() = "content" and ./id/text() = "7"]',
-				'\BaseXMS\UiComponent\Html'            => '/context/type[text() = "html"]',
-				'\BaseXMS\UiComponent\Head'            => '/context/type[text() = "head"]',
-				'\BaseXMS\UiComponent\Body'            => '/context/type[text() = "body"]',
-				'\BaseXMS\UiComponent\Debug'           => '/context/type[text() = "debug"]',
-				'\BaseXMS\UiComponent\Content'         => '/context/type[text() = "content"]',
-				'\BaseXMS\UiComponent\Head\InlineCss'  => '/context/type[text() = "inline-css"]'
-		);
+		$rules = array();
+		
+		if( !isset( self::$rules ) )
+		{
+			$config = $services->get( 'application' )->getConfig();
+	
+			$designs = $config[ 'designs' ];
+			
+			if( !empty( $designs ) )
+			{
+				ksort( $designs );
+	
+				foreach( array_reverse( $designs ) as $design )
+				{
+					if( isset( $config[ 'designrules' ][ $design ] ) )
+					{
+						$rules = $rules + $config[ 'designrules' ][ $design ]; 
+					}
+				}
+			}
+
+			self::$rules = $rules;
+		}
+		
+		return self::$rules;
 	}
 	
-	private static function getXPathContext( $type, $data )
+	private static function getXPathContext( $incElement, $data )
 	{
-		$context =
-'<context>
-	<type>'. $type .'</type>
-	<id>'. $data->attributes()->id . '</id>
-</context>';
-
+		$attributes = $incElement->attributes;
+		$context = '<context>';
+		for( $i = 0; $i < $attributes->length; ++$i )
+		{
+			$item = $attributes->item( $i );
+			$context .= '<'. $item->name .'>'. $item->value .'</'. $item->name .'>';
+		}
+		$context .= '<id>'. $data->attributes()->id . '</id>';
+		$context .= '</context>';
 		//	<raw>'. $data->raw->saveXML() . '</raw>
 		
 		$doc = new \DOMDocument();
 		$doc->loadXML( $context );
-		return new \DOMXpath( $doc );
-	}
-	
-	private static function xpathMatch( $xPathObj, $tests )
-	{
-		$return = false;
-		
-		if( !empty( $tests ) )
-		{
-			foreach( $tests as $key => $test )
-			{
-				$result = $xPathObj->query( $test );
-				
-				if( $result->length )
-				{
-					$return = $key;
-					break;
-				}
-			}
-		}
-		
-		return $return;
+		return new DOMXpath( $doc );
 	}
 }
 

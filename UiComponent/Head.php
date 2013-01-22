@@ -5,7 +5,7 @@ use BaseXMS\UiComposer;
 
 class Head extends HtmlWidget
 {
-	public function getXml( UiComposer $composer )
+	public function getXml()
 	{
 		return
 '<head>

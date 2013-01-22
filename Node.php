@@ -1,10 +1,10 @@
 <?php
 namespace BaseXMS;
 
-protected $xmlDb;
-
 class Node
 {
+	protected $xmlDb;
+	
 	public function __construct( $xmlDb )
 	{
 		$this->xmlDb = $xmlDb;

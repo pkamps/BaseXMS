@@ -4,12 +4,6 @@ namespace BaseXMS\Log;
 
 class Logger extends \Zend\Log\Logger
 {
-	public function say( $message, $extra = array() )
-	{
-		
-		
-	}
-	
 	public function log( $priority, $message, $extra = array() )
 	{
 		// add details to $extra
@@ -24,6 +18,11 @@ class Logger extends \Zend\Log\Logger
 		$caller[ 'class' ] = $prevCaller[ 'class' ];
 		
 		$extra = array_merge( $extra, $caller );
+
+		if( is_string( $message ) )
+		{
+			$message = str_replace( '<', '--bigger than--', $message );
+		}
 		
 		return parent::log( $priority, $message, $extra );
 	}

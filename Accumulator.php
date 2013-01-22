@@ -90,6 +90,37 @@ class Accumulator
 		
 		return $return;
 	}
+	
+	public function getDataAsText()
+	{
+		$return = '';
+		
+		if( !empty( $this->data ) )
+		{
+			foreach( $this->data as $identifier => $entry )
+			{
+				$return .= $identifier . "\t";
+				$return .= number_format( ( $entry[ 'accumulation' ] ) * 1000, 4 ) . ' ms' . "\n";
+			}
+		}
+
+		$return .= "\n";
+		
+		if( !empty( $this->memoryUsage ) )
+		{
+			$this->memoryUsage[ 'peak' ] = memory_get_peak_usage();
+				
+			foreach( $this->memoryUsage as $identifier => $value )
+			{
+				$unit = array('b','kb','mb','gb','tb','pb');
+		
+				$return .= $identifier . "\n";
+				$return .= round( $value / pow( 1024,( $i = floor( log( $value, 1024 ) ) ) ), 2 ).' '.$unit[$i] . "\n";
+			}
+		}
+		
+		return $return;
+	}
 }
 
 ?>

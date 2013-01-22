@@ -26,6 +26,10 @@ class SiteAccessFactory
 					$serviceLocator->get( 'log' )->warn( 'Unable to load siteaccess: ' . $class );
 				}
 			}
+			else
+			{
+				$serviceLocator->get( 'log' )->warn( 'Unkown siteaccess context: ' . $context );
+			}
 		}
 		
 		$serviceLocator->get( 'log' )->info( 'Loading siteaccess: ' . $class );

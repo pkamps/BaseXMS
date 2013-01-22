@@ -8,26 +8,26 @@ class InlineCss extends \BaseXMS\UiComponent\HtmlWidget
 {
 	public $needsRerender = true;
 	
-	public function getXml( UiComposer $composer )
+	public function getXml()
 	{
 		return '<style id="inline-css" type="text/css"></style>';
 	}
 	
 	/**
-	 * @param UiComposer $composer
+	 * 
 	 */
-	public function rerender( UiComposer $composer )
+	public function rerender()
 	{
-		$data = $composer->getSharedData();
+		$data = $this->composer->getSharedData();
 		
 		if( isset( $data->inlineCss ) && trim( $data->inlineCss ) )
 		{
 			// get $doc and add text node under the <style> tag
-			$doc = $composer->getDoc();
+			$doc = $this->composer->getDoc();
 			
 			$content = $doc->createTextNode( $data->inlineCss );
 			
-			$xPath = new \DOMXpath( $composer->getDoc() );
+			$xPath = new \DOMXpath( $this->composer->getDoc() );
 			
 			$styleElement = $xPath->query( '//style[@id="inline-css"]' );
 			

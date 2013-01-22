@@ -6,37 +6,47 @@ use BaseXMS\UiComposer;
 
 class Debug extends HtmlWidget
 {
-	public function getXml( UiComposer $composer )
+	public function getXml()
 	{
+		$content = '';
 		$formatter = new \BaseXMS\Log\Formatter\Html;
 		
-		// TODO: loop over writers and print out all Mock writer content
-		$events = $composer->getServices()->get( 'log' )->getWriters()->top()->events;
-		
 		$logHtml = '';
-		if( !empty( $events ) )
+		if( $this->composer->getServices()->get( 'log' )->getWriters()->count() )
 		{
-			$logHtml .= '<ul class="log-entries">';
-			foreach( $events as $event )
+			foreach( $this->composer->getServices()->get( 'log' )->getWriters() as $writer )
 			{
-				$logHtml .= $formatter->format( $event );
+				if( $writer instanceof \Zend\Log\Writer\Mock )
+				{
+					// TODO: give writers a title
+					$events = $writer->events;
+
+					if( !empty( $events ) )
+					{
+						$logHtml .= '<h3>' . $writer->getName() . '</h3>';
+						$logHtml .= '<ul class="log-entries">';
+						foreach( $events as $event )
+						{
+							$logHtml .= $formatter->format( $event );
+						}
+						$logHtml .= '</ul>';
+					}
+				}				
 			}
-			$logHtml .= '</ul>';
 		}
 		
 		$content =
 		'<div id="debug">
 		<h1>Debug</h1>
 		' . $logHtml . '
-		' . 	$composer->getServices()->get( 'accumulator')->getDataAsHtml() . '
+		' . 	$this->composer->getServices()->get( 'accumulator')->getDataAsHtml() . '
 		</div>';
 		
 		return $content;
 	}
 	
-	public function getCss( UiComposer $composer )
+	public function getCss()
 	{
-		
 		return 
 '
 .log-entries

@@ -15,7 +15,10 @@ into an Zend response.
 
 BaseXMS Objects
 --------------------
-The factory takes the xml element from the content tag.
+I think that's an old concept and I moved away from it. I don't BaseXMS Object but an API to read/write contentobjects and node info.
+The raw content in contentobjects are very individual and the RequestHandle should know what to do with it.
+
+"The factory takes the xml element from the content tag." - old text, remove it
 
 Persistent Object API
 ========================
@@ -26,7 +29,9 @@ No templates but parsing xhtml structure
 ===========================================
 I decided to not use a template engine that executes the template code from top to bottom. Instead I'm using a UiComposer
 which build the xhtml dom document recursively. Each recursive step is using a UiComponent to build parts of the dom document.
-That part could use "<include type="article" />" tags to trigger another recursive step in the UiComposer.
+That part uses "<include type="article" />" tags to trigger another recursive step in the UiComposer. The include tag and the composer
+are referenced in the UiComponent. The composer has object vars to collect/re-use data from/for each UiComponent. The include tag element
+is useful to read more element attributes (like '<include type="article" foo="bar" />').
 
 
 Settings
@@ -81,3 +86,9 @@ Execution Flow
    
 TODO: I think the siteaccess and request handler should take the application object and add more details to it.
 In general I should try to pass along the service object (which contains the application).
+
+
+event trigger versus config files
+====================================
+The log solution uses a trigger event to register log writers. Other factories like the siteaccesses use the settings.
+Should I go a pure PHP way or should I work with settings?

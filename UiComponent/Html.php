@@ -9,7 +9,7 @@ class Html extends HtmlWidget
 	/**
 	 * @return DOMNode
 	 */
-	public function getXml( UiComposer $composer )
+	public function getXml()
 	{
 		return
 '<html>

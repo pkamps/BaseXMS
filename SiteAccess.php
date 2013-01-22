@@ -61,7 +61,7 @@ class SiteAccess
 		$baseXMSResponse = $urlDispatcher->dispatch( $path );
 	
 		$response = new ZendResponse();
-	
+
 		switch( (string) $baseXMSResponse->code )
 		{
 			case 200:

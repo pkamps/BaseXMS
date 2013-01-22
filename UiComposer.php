@@ -2,7 +2,7 @@
 
 namespace BaseXMS;
 
-use BaseXMS\SimpleXMLElement as SimpleXMLElement;
+use BaseXMS\Stdlib\SimpleXMLElement as SimpleXMLElement;
 
 /*
  * Recursively composes a page
@@ -33,6 +33,9 @@ class UiComposer
 	private $xpath;
 	private $services;
 	
+	/*
+	 * prevent endless loops
+	 */
 	private static $buildExecutionCount = 0;
 	
 	/**
@@ -60,7 +63,7 @@ class UiComposer
 	{
 		$this->buildDoc( $this->doc->firstChild );
 		$this->rerender();
-		
+
 		return $this;
 	}
 	
@@ -84,30 +87,33 @@ class UiComposer
 			{
 				foreach( $includes as $include )
 				{
-					$includeType = $include->getAttribute( 'type' );
-					
-					//TODO: consider to send $this instead of services
-					$uiComponent = UiComponent\Factory::factory( $this->services, $includeType, $this->data );
-					
+					$uiComponent = UiComponent\Factory::factory( $this, $include );
+					// Add component to list
+					$this->uiComponents[] = $uiComponent;
+						
 					/*
 					 * Add UiComponent xml
 					 */
-					$result = $uiComponent->render( $this, $include );
+					$result = $uiComponent->render();
 
-					// need to import before we can replace it
-					$result = $this->doc->importNode( $result, true );
-					$include->parentNode->replaceChild( $result, $include );
+					if( $result instanceof \DOMNode )
+					{
+						// need to import before we can replace it
+						$result = $this->doc->importNode( $result, true );
+						$include->parentNode->replaceChild( $result, $include );
 					
-					// Add component to list
-					$this->uiComponents[] = $uiComponent;
-					
-					$this->buildDoc( $result );
+						$this->buildDoc( $result );
+					}
+					else
+					{
+						//TODO: add log entry
+					}
 				}
 			}
 		}
 		else
 		{
-			throw new \Exception( 'too many loops' );
+			throw new \Exception( 'too many execution loops' );
 		}
 		
 		return $this;
@@ -122,7 +128,7 @@ class UiComposer
 			{
 				if( $uiComponent->needsRerender )
 				{
-					$uiComponent->rerender( $this );
+					$uiComponent->rerender();
 				}
 			}
 		}
@@ -139,6 +145,11 @@ class UiComposer
 	public function getDoc()
 	{
 		return $this->doc;
+	}
+	
+	public function getData()
+	{
+		return $this->data;
 	}
 	
 	public function getSharedData()

@@ -55,7 +55,53 @@ class Application extends ZendApplication
 		);
 		
 		return $siteAccess->getResponse( $this->getServiceManager(), $routeMatch->getParam( 'path' ) );
-	}	
+	}
+	
+	public function run()
+	{
+		$events = $this->getEventManager();
+		$event  = $this->getMvcEvent();
+	
+		// Define callback used to determine whether or not to short-circuit
+		$shortCircuit = function ($r) use ($event) {
+			if ($r instanceof ResponseInterface) {
+				return true;
+			}
+			if ($event->getError()) {
+				return true;
+			}
+			return false;
+		};
+	
+		// Trigger route event
+		$result = $events->trigger(MvcEvent::EVENT_ROUTE, $event, $shortCircuit);
+		if ($result->stopped()) {
+			$response = $result->last();
+			if ($response instanceof ResponseInterface) {
+				$event->setTarget($this);
+				$event->setResponse($response);
+				$events->trigger(MvcEvent::EVENT_FINISH, $event);
+				return $response;
+			}
+			if ($event->getError()) {
+				return $this->completeRequest($event);
+			}
+			return $event->getResponse();
+		}
+		if ($event->getError()) {
+			return $this->completeRequest($event);
+		}
+	
+		// Trigger dispatch event
+		$result = $events->trigger(MvcEvent::EVENT_DISPATCH, $event, $shortCircuit);
+	
+		// Complete response
+		$response = $result->last();
+		
+		//TODO: replace this shortcut hack
+		return $response;
+	}
+	
 }
 
 ?>

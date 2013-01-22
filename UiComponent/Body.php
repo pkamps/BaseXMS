@@ -6,7 +6,7 @@ use BaseXMS\UiComposer;
 
 class Body extends HtmlWidget
 {
-	public function getXml( UiComposer $composer )
+	public function getXml()
 	{
 		return
 '<body>

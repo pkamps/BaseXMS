@@ -62,12 +62,12 @@ class UrlDispatcher
 			
 			if( !$response )
 			{
-				$response = new SimpleXMLElement( '<node><code>400</code></node>' );
+				$response = new \BaseXMS\Stdlib\SimpleXMLElement( '<node><code>400</code></node>' );
 			}
 		}
 		catch( \Exception $e )
 		{
-			$response = new SimpleXMLElement( '<node><code>500</code></node>' );
+			$response = new \BaseXMS\Stdlib\SimpleXMLElement( '<node><code>500</code></node>' );
 		}
 		
 		$this->services->get( 'accumulator' )->stop( 'URL Dispatch' );

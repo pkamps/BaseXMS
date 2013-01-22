@@ -1,4 +1,4 @@
-<node id='1' path='' class='\BaseXMS\RequestHandler\RequestHandler'>
+<node id='1' path='' class='\BaseXMS\RequestHandler\UiComposer'>
 	<content class=''>
 		<meta>
 			<foo>bar</foo>
@@ -8,7 +8,7 @@
 		</raw>
 	</content>
 
-	<node id='2' path='usa' class='\BaseXMS\RequestHandler\RequestHandler'>
+	<node id='2' path='usa' class='\BaseXMS\RequestHandler\UiComposer'>
 		<properties>
 			<altPaths>
 				<entry path='usa2' />
@@ -24,7 +24,7 @@
 			<raw>Hello tree.</raw>
 		</content>
 
-		<node id='3' path='politics' class='\BaseXMS\RequestHandler\RequestHandler'>
+		<node id='3' path='politics' class='\BaseXMS\RequestHandler\UiComposer'>
 			<properties>
 				<altPaths>
 					<entry path='politics2' />

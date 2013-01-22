@@ -4,7 +4,7 @@ namespace BaseXMS;
 
 use BaseXClient\Session,
     BaseXMS\Accumulator,
-    BaseXMS\SimpleXMLElement as SimpleXMLElement;
+    BaseXMS\Stdlib\SimpleXMLElement as SimpleXMLElement;
 
 /**
  * @author pek
