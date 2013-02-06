@@ -14,15 +14,27 @@ class UiComposer
 	 */
 	private $doc;
 	
+	/**
+	 * @var string
+	 */
+	private $docTypeQualifiedName = 'html';
+	
+	
+	/**
+	 * @var array
+	 */
+	private $tidyOptions;
+	
 	/*
 	 * UiCollection of all components for a request
 	 */
 	private $uiComponents;
 
 	/*
-	 * Constructor gets the data from outside 
+	 * Constructor gets the data from outside. It is used in the UiComponent factory to get
+	 * a UiComponent instance.
 	 */
-	private $data;
+	private $contextData;
 	
 	/*
 	 * Data collected during parsing UiComponents
@@ -36,85 +48,116 @@ class UiComposer
 	/*
 	 * prevent endless loops
 	 */
-	private static $buildExecutionCount = 0;
+	private $buildMaxDepthCount = 0;
+	private static $buildMaxDepth = 20;
 	
 	/**
-	 * @param unknown_type $services
-	 * @param unknown_type $id
+	 * @param ServiceManager $services
+	 * @param DOMDocument $data
 	 */
-	public function __construct( $services, $data )
+	public function __construct( $services, \DOMDocument $data )
 	{
 		//TODO: Should I create a class?
-		$this->sharedData = new \stdClass;
-		
-		$this->services = $services;
-		$this->data = $data;
-
-		// Build base doc
-		$domImpl = new \DOMImplementation();
-		$doctype   = $domImpl->createDocumentType( 'html' );
-		$this->doc = $domImpl->createDocument( null, 'include', $doctype );
-		$this->doc->lastChild->setAttribute( 'type', 'html' );
-		
-		$this->xpath = new \DOMXpath( $this->doc );
+		$this->sharedData  = new \stdClass;
+		$this->services    = $services;
+		$this->contextData = $data;
 	}
 	
 	public function run()
 	{
-		$this->buildDoc( $this->doc->firstChild );
-		$this->rerender();
+		return $this->createDoc()->buildDoc()->rerender();
+	}
+	
+	/**
+	 * Builds the doc and the xpath which is needed for buildDoc
+	 * 
+	 * @return \BaseXMS\UiComposer
+	 */
+	protected function createDoc()
+	{
+		$domImpl = new \DOMImplementation();
+		
+		if( $this->docTypeQualifiedName )
+		{
+			$doctype   = $domImpl->createDocumentType( $this->docTypeQualifiedName );
+			$this->doc = $domImpl->createDocument( null, 'include', $doctype );
+		}
+		else
+		{
+			$this->doc = $domImpl->createDocument( null, 'include' );
+		}
+		
+		$this->doc->lastChild->setAttribute( 'type', 'root' );
+		
+		$this->xpath = new \DOMXpath( $this->doc );
 
 		return $this;
 	}
 	
 	/**
-	 * @param \DOMNode $element
-	 * @throws \Exception
-	 * @return Ambiguous
+	 * do-while loop is better than a recursive algo. Let's say there is a in deep down Ui component,
+	 * at least we parse out the basic structure of the doc (would be different in a recursive approach).
+	 *
+	 * @return \BaseXMS\UiComposer
 	 */
-	protected function buildDoc( \DOMNode $element )
+	protected function buildDoc()
 	{
-		self::$buildExecutionCount++;
-		
-		if( self::$buildExecutionCount < 1000 )
+		do
 		{
-			#$this->doc->formatOutput = true;
-			#echo $this->doc->saveHTML();
-				
-			$includes = $this->xpath->query( './/include | /include', $element );
-
-			if( $includes && $includes->length )
+			$this->buildMaxDepthCount++;
+			
+			$includes = $this->xpath->query( '//include' );
+			
+			$had_includes = $includes->length > 0;
+			
+			if( $had_includes )
 			{
 				foreach( $includes as $include )
 				{
-					$uiComponent = UiComponent\Factory::factory( $this, $include );
-					// Add component to list
-					$this->uiComponents[] = $uiComponent;
-						
-					/*
-					 * Add UiComponent xml
-					 */
-					$result = $uiComponent->render();
-
-					if( $result instanceof \DOMNode )
-					{
-						// need to import before we can replace it
-						$result = $this->doc->importNode( $result, true );
-						$include->parentNode->replaceChild( $result, $include );
-					
-						$this->buildDoc( $result );
-					}
-					else
-					{
-						//TODO: add log entry
-					}
+					$this->handleInclude( $include );
 				}
 			}
 		}
+		while( $had_includes && $this->buildMaxDepthCount < self::$buildMaxDepth );
+		
+		if( $this->buildMaxDepthCount == self::$buildMaxDepth )
+		{
+			$this->services->get( 'log' )->err( 'Reached max execution loops in UiComposer. Rendering interrupted.' );
+		}
+		
+		return $this;
+	}
+	
+	/**
+	 * Based on the include and contextData this function gets a UiComponent.
+	 * The it asks the UiComponent to fill an DOMFragment.
+	 * 
+	 * @param \DOMNode $include
+	 * @return \BaseXMS\UiComposer
+	 */
+	protected function handleInclude( \DOMNode $include )
+	{
+		$uiComponent = UiComponent\Factory::factory( $this, $include );
+			
+		/*
+		 * Create Fragment and let the UiComponent fill it
+		*/
+		$responseFragment = $this->doc->createDocumentFragment();
+		$uiComponent->render( $responseFragment );
+			
+		//TODO: that's only the case if UiComponent destroyes it - unlikely?
+		if( $responseFragment instanceof \DOMDocumentFragment )
+		{
+			$include->parentNode->replaceChild( $responseFragment, $include );
+		}
 		else
 		{
-			throw new \Exception( 'too many execution loops' );
+			unset( $responseFragment );
+			$this->services->get( 'log' )->warn( 'Did not get a valid DOMFragment' );
 		}
+
+		// Add component to list
+		$this->uiComponents[ $uiComponent->getId() ] = $uiComponent;
 		
 		return $this;
 	}
@@ -132,14 +175,21 @@ class UiComposer
 				}
 			}
 		}
+		
+		return $this;
 	}
 	
 	public function output()
 	{
+		$output = $this->doc->saveHTML();
+
+		//Tidy output
+		if( !empty( $this->tidyOptions ) && extension_loaded( 'tidy' ) )
+		{
+			//not supported yet
+		}
 		
-		// won't work - php bug
-		$this->doc->formatOutput = true;
-		return $this->doc->saveHTML();
+		return $output;
 	}
 	
 	public function getDoc()
@@ -149,7 +199,7 @@ class UiComposer
 	
 	public function getData()
 	{
-		return $this->data;
+		return $this->contextData;
 	}
 	
 	public function getSharedData()
@@ -160,6 +210,16 @@ class UiComposer
 	public function getServices()
 	{
 		return $this->services;
+	}
+	
+	public function getUiComponents()
+	{
+		return $this->uiComponents;
+	}
+	
+	public function getUiComponent( $instanceId )
+	{
+		return $this->uiComponents[ $instanceId ];
 	}
 }
 

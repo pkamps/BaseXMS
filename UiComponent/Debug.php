@@ -8,19 +8,19 @@ class Debug extends HtmlWidget
 {
 	public function getXml()
 	{
-		$content = '';
+		$logger    = $this->composer->getServices()->get( 'log' );
 		$formatter = new \BaseXMS\Log\Formatter\Html;
-		
+
 		$logHtml = '';
-		if( $this->composer->getServices()->get( 'log' )->getWriters()->count() )
+		if( $logger->getWriters()->count() )
 		{
-			foreach( $this->composer->getServices()->get( 'log' )->getWriters() as $writer )
+			foreach( $logger->getWriters()->toArray() as $writer )
 			{
 				if( $writer instanceof \Zend\Log\Writer\Mock )
 				{
 					// TODO: give writers a title
 					$events = $writer->events;
-
+						
 					if( !empty( $events ) )
 					{
 						$logHtml .= '<h3>' . $writer->getName() . '</h3>';
@@ -31,7 +31,7 @@ class Debug extends HtmlWidget
 						}
 						$logHtml .= '</ul>';
 					}
-				}				
+				}
 			}
 		}
 		

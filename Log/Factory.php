@@ -17,7 +17,7 @@ class Factory implements FactoryInterface
 			$eventManager = $serviceLocator->get( 'application' )->getBaseXMSEventManager();
 			$eventManager->trigger( 'AddLogWriter', $this, $l );
 		}
-		
+
 		if( $l->getWriters()->isEmpty() )
 		{
 			$l->addWriter( new Null() );

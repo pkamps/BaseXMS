@@ -20,7 +20,7 @@ class Factory
 		
 		$xpath = self::getXPathContext( $incElement, $composer->getData() );
 		$class = $xpath->getFirstMatchingXpath( self::getRules( $services ) );
-		
+
 		if( !class_exists( $class ) )
 		{
 			$services->get( 'log' )->warn( 'Unknown UiComponent: ' . $class );
@@ -61,7 +61,7 @@ class Factory
 
 			self::$rules = $rules;
 		}
-		
+
 		return self::$rules;
 	}
 	
@@ -74,12 +74,14 @@ class Factory
 			$item = $attributes->item( $i );
 			$context .= '<'. $item->name .'>'. $item->value .'</'. $item->name .'>';
 		}
-		$context .= '<id>'. $data->attributes()->id . '</id>';
+		// Will break if we decide to store $data differently
+		$context .= $data->saveXML( $data->firstChild );
 		$context .= '</context>';
-		//	<raw>'. $data->raw->saveXML() . '</raw>
 		
 		$doc = new \DOMDocument();
 		$doc->loadXML( $context );
+		//echo $doc->saveXML();
+		
 		return new DOMXpath( $doc );
 	}
 }

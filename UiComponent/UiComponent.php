@@ -10,21 +10,17 @@ class UiComponent
 	protected $incElement;
 	
 	public $needsRerender = false;
-		
+	
 	/**
-	 * @param UiComposer $composer
-	 * @return DOMNode
+	 * @param DOMDocumentFragment $fragment
+	 * @return \BaseXMS\UiComponent\UiComponent
 	 */
-	public function render()
+	public function render( \DOMDocumentFragment $fragment )
 	{
-		/* not sure what to do here
-		$content = '<span>Default from UiComponent</span>';
+		$content = '<section>Default from UiComponent</section>';
+		$fragment->appendXML( $content );
 		
-		$doc = new \DOMDocument();
-		$doc->loadXML( $content );
-		
-		return $doc->firstChild;
-		*/
+		return $this;
 	}
 	
 	/**
@@ -35,6 +31,29 @@ class UiComponent
 	{
 		$this->needsRerender = false;
 		return $this;
+	}
+	
+	/**
+	 * @param mixed $data
+	 * @return string
+	 */
+	protected function storeData( $instanceData )
+	{
+		$instanceId = spl_object_hash( $this );
+		
+		$data = $this->composer->getSharedData();
+		$data->componentData[ $instanceId ] = $instanceData;
+		
+		return $instanceId;
+	}
+	
+	/**
+	 * @param string $instanceId
+	 */
+	protected function readData( $instanceId )
+	{
+		$data = $this->composer->getSharedData();
+		return $data->componentData[ $instanceId ];
 	}
 	
 	/**
@@ -56,7 +75,14 @@ class UiComponent
 		$this->incElement = $element;
 		return $this;
 	}
-	
+
+	/**
+	 * Get instance id
+	 */
+	public function getId()
+	{
+		return spl_object_hash( $this );
+	}
 }
 
 ?>

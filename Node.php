@@ -13,7 +13,7 @@ class Node
 	public function read( $id )
 	{
 		$query = '//node[properties/altFullPaths//entry[@path="' . $fullPath . '"]]/content';
-		return $this->xmlDb->execute( $query, 'xml' );
+		return $this->xmlDb->execute( $query, 'simplexml' );
 	}
 }
 

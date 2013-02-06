@@ -2,6 +2,8 @@
 
 namespace BaseXMS\DataObjectHandler;
 
+use BaseXMS\Stdlib\DOMDocument;
+
 class DataObjectHandler
 {
 	protected $services;
@@ -11,22 +13,10 @@ class DataObjectHandler
 		$this->services = $services;
 	}	
 
-	public function isValid( $node )
+	public function isValid( $doc )
 	{
-		$doc = $this->simpleXmlToDomDocument( $node );
 		return $doc->schemaValidateSource( $this->getSchema() );
 	}
-	
-	public function simpleXmlToDomDocument( $simpleXmlElement )
-	{
-		$domnode = dom_import_simplexml( $simpleXmlElement );
-		$dom = new \DOMDocument();
-		$domnode = $dom->importNode( $domnode, true );
-		$dom->appendChild( $domnode );
-	
-		return $dom;
-	}
-
 }
 
 ?>

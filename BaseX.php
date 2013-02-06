@@ -2,6 +2,8 @@
 
 namespace BaseXMS;
 
+use BaseXMS\Stdlib\DOMDocument;
+
 use BaseXClient\Session,
     BaseXMS\Accumulator,
     BaseXMS\Stdlib\SimpleXMLElement as SimpleXMLElement;
@@ -37,14 +39,13 @@ class BaseX
 	function __construct( $services )
 	{
 		$this->log = $services->get( 'log' );
-		
-		$config = $services->get( 'application' )->getConfig();
-		
+		$config    = $services->get( 'config' );
+
 		if( !empty( $config[ 'BaseX' ] ) )
 		{
 			$this->connection = array_merge( $this->connection, $config[ 'BaseX' ] );
 		}
-		
+
 		$this->accumulator = $services->get( 'accumulator' );
 	}
 	
@@ -125,6 +126,13 @@ class BaseX
 			{
 				case 'xml':
 				{
+					$return = new DOMDocument();
+					$return->loadXML( $resultText );
+				}
+				break;
+				
+				case 'simplexml':
+				{
 					$return = new SimpleXMLElement( $resultText );
 				}
 				break;
@@ -147,4 +155,5 @@ class BaseX
 	}
 	
 }
+
 ?>

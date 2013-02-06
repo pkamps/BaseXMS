@@ -100,7 +100,7 @@ class UrlDispatcher
 		
 		$query = 'let $code := 200 return let $x := ' . $nodePath . 'return if( $x ) then ' . $this->returnFormat . ' else null';
 		
-		$result = $this->services->get( 'xmldb' )->execute( $query, 'xml' );
+		$result = $this->services->get( 'xmldb' )->execute( $query, 'simplexml' );
 	
 		return $result ? $result : false;
 	}
@@ -115,7 +115,7 @@ class UrlDispatcher
 
 		$query = 'let $code := 200 return let $x := ' . $nodePath . 'return if( $x ) then ' . $this->returnFormat . ' else null';
 		
-		$result = $this->services->get( 'xmldb' )->execute( $query, 'xml' );
+		$result = $this->services->get( 'xmldb' )->execute( $query, 'simplexml' );
 
 		return $result ? $result : false;
 	}
@@ -179,7 +179,7 @@ class UrlDispatcher
 		$query  = 'let $code := 301 return let $x := //node[properties/oldFullPaths//entry[@path="' . $fullPath . '"]] ';
 		$query .= 'return if( $x ) then ' . $this->returnFormat . ' else null';
 
-		$result = $this->services->get( 'xmldb' )->execute( $query, 'xml' );
+		$result = $this->services->get( 'xmldb' )->execute( $query, 'simplexml' );
 		
 		return $result ? $result : false;
 	}

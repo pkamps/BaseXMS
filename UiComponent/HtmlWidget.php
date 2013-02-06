@@ -9,7 +9,7 @@ class HtmlWidget extends UiComponent
 	/**
 	 * @return DOMNode
 	 */
-	public function render()
+	public function render( \DOMDocumentFragment $fragment )
 	{
 		/*
 		 * page CSS
@@ -23,9 +23,13 @@ class HtmlWidget extends UiComponent
 		 * replace include tag with Widget XML
 		 */
 		//TODO: add function getNode()
-		$xml = $this->getXml( $this->composer );
-		$doc = \DOMDocument::loadXML( $xml );
+		$xml = $this->getXml();
 
+		$fragment->appendXML( $xml );
+		
+		return $this;
+		
+		// dead code
 		if( !$doc )
 		{
 			$this->composer->getServices()->get( 'log' )->err( 'XML parse errors in "' . get_class( $this ) . '"' );

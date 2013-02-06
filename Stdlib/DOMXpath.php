@@ -28,6 +28,27 @@ class DOMXpath extends \DOMXpath
 		
 		return $return;
 	}
+	
+	
+	/**
+	 * If the query returns a non-empty NodeList. It will return the value of the first element.
+	 * 
+	 * @param string $query
+	 * @return mixed
+	 */
+	public function queryToValue( $query )
+	{
+		$return = false;
+		
+		$result = $this->query( $query );
+		
+		if( $result->length )
+		{
+			$return = $result->item(0)->value;
+		}
+		
+		return $return;
+	}
 }
 
 ?>

@@ -38,7 +38,7 @@ class Node extends DataObjectHandler
 		
 		//echo $query;
 		
-		return $this->services->get( 'xmldb' )->execute( $query, 'xml' );
+		return $this->services->get( 'xmldb' )->execute( $query, 'simplexml' );
 	}
 	
 	function update( $node )

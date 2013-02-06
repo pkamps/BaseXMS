@@ -1,6 +1,6 @@
 <?php 
 
-namespace BaseXms;
+namespace BaseXMS;
 
 class Accumulator
 {
