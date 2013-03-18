@@ -1,13 +1,18 @@
 <?php 
 
-namespace BaseXMS;
+namespace BaseXMS\UiComposer;
 
 use BaseXMS\Stdlib\SimpleXMLElement as SimpleXMLElement;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Cache\StorageFactory;
+use Zend\Cache\PatternFactory;
+
 
 /*
- * Recursively composes a page
+ * composes a doc
  */
-class UiComposer
+class UiComposer implements ServiceLocatorAwareInterface
 {
 	/*
 	 *  Return is build in $doc
@@ -31,18 +36,17 @@ class UiComposer
 	private $uiComponents;
 
 	/*
-	 * Constructor gets the data from outside. It is used in the UiComponent factory to get
-	 * a UiComponent instance.
+	 * It is used in the UiComponent factory to get a UiComponent instance.
+	 * 
+	 * @var BaseXMS\Stdlib\DOMDocument
 	 */
 	private $contextData;
 	
-	/*
-	 * Data collected during parsing UiComponents
-	 */
-	private $sharedData;
-	
-	
 	private $xpath;
+	
+	/**
+	 * @var ServiceLocatorInterface
+	 */
 	private $services;
 	
 	/*
@@ -50,18 +54,7 @@ class UiComposer
 	 */
 	private $buildMaxDepthCount = 0;
 	private static $buildMaxDepth = 20;
-	
-	/**
-	 * @param ServiceManager $services
-	 * @param DOMDocument $data
-	 */
-	public function __construct( $services, \DOMDocument $data )
-	{
-		//TODO: Should I create a class?
-		$this->sharedData  = new \stdClass;
-		$this->services    = $services;
-		$this->contextData = $data;
-	}
+
 	
 	public function run()
 	{
@@ -138,13 +131,13 @@ class UiComposer
 	protected function handleInclude( \DOMNode $include )
 	{
 		$uiComponent = UiComponent\Factory::factory( $this, $include );
-			
+		
 		/*
 		 * Create Fragment and let the UiComponent fill it
 		*/
 		$responseFragment = $this->doc->createDocumentFragment();
-		$uiComponent->render( $responseFragment );
-			
+		$uiComponent->fillFragment( $responseFragment, $this );
+		
 		//TODO: that's only the case if UiComponent destroyes it - unlikely?
 		if( $responseFragment instanceof \DOMDocumentFragment )
 		{
@@ -171,7 +164,7 @@ class UiComposer
 			{
 				if( $uiComponent->needsRerender )
 				{
-					$uiComponent->rerender();
+					$uiComponent->rerender( $this );
 				}
 			}
 		}
@@ -192,24 +185,45 @@ class UiComposer
 		return $output;
 	}
 	
+	/** 
+	 * @return DOMDocument
+	 */
 	public function getDoc()
 	{
 		return $this->doc;
 	}
 	
+	/**
+	 * TODO: Rename to getContextData()
+	 * @return DOMDocuement
+	 */
 	public function getData()
+	{
+		return $this->getContextData();
+	}
+
+	/**
+	 * @return \BaseXMS\UiComposer\UiComposer
+	 */
+	public function getContextData()
 	{
 		return $this->contextData;
 	}
 	
-	public function getSharedData()
+	/**
+	 * @param BaseXMS\Stdlib\DOMDocument $doc
+	 * @return \BaseXMS\UiComposer\UiComposer
+	 */
+	public function setContextData( \BaseXMS\Stdlib\DOMDocument $doc )
 	{
-		return $this->sharedData;
+		$this->contextData = $doc;
+		return $this;
 	}
-
+	
+	//TODO: rename function name in consumers
 	public function getServices()
 	{
-		return $this->services;
+		return $this->getServiceLocator();
 	}
 	
 	public function getUiComponents()
@@ -220,6 +234,25 @@ class UiComposer
 	public function getUiComponent( $instanceId )
 	{
 		return $this->uiComponents[ $instanceId ];
+	}
+	
+	public function setServiceLocator( ServiceLocatorInterface $serviceLocator )
+	{
+		$this->services = $serviceLocator;
+
+		// adding cache service
+		if( true )
+		{
+			$cache = new \BaseXMS\Cache\Storage\Adapter\Filesystem();
+			$cache->setOptions( array( 'cache_dir' => 'data/cache' ) );
+
+			$this->services->setService( 'cache', $cache );
+		}
+	}
+	
+	public function getServiceLocator()
+	{
+		return $this->services;
 	}
 }
 

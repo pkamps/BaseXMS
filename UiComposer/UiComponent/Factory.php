@@ -1,8 +1,10 @@
 <?php 
 
-namespace BaseXMS\UiComponent;
+namespace BaseXMS\UiComposer\UiComponent;
 
 use BaseXMS\Stdlib\DOMXpath;
+use BaseXMS\Stdlib\DOMDocument;
+use BaseXMS\UiComposer\UiComposer;
 
 class Factory
 {
@@ -14,24 +16,26 @@ class Factory
 	 * @param DomElement $incElement
 	 * @return UiComponent
 	 */
-	public static function factory( $composer, $incElement )
+	public static function factory( UiComposer $composer, $incElement )
 	{
-		$services = $composer->getServices();
+		$services = $composer->getServiceLocator();
 		
-		$xpath = self::getXPathContext( $incElement, $composer->getData() );
+		$context = self::getContextDescription( $incElement, $composer->getData() );
+		
+		$xpath = new DOMXpath( $context );
 		$class = $xpath->getFirstMatchingXpath( self::getRules( $services ) );
 
 		if( !class_exists( $class ) )
 		{
 			$services->get( 'log' )->warn( 'Unknown UiComponent: ' . $class );
-			$class = '\BaseXMS\UiComponent\UiComponent';
+			$class = '\BaseXMS\UiComposer\UiComponent\UiComponent';
 		}
 		
 		$services->get( 'log' )->info( 'Loading UiComponent: ' . $class );
 		
 		$component = new $class;
-		$component->setComposer( $composer );
-		$component->setIncElement( $incElement );
+		$component->setUiComposer( $composer );
+		$component->setContext( $context );
 		
 		return $component;
 	}
@@ -65,10 +69,10 @@ class Factory
 		return self::$rules;
 	}
 	
-	private static function getXPathContext( $incElement, $data )
+	private static function getContextDescription( $incElement, $data )
 	{
 		$attributes = $incElement->attributes;
-		$context = '<context>';
+		$context = '<context type="includetag">';
 		for( $i = 0; $i < $attributes->length; ++$i )
 		{
 			$item = $attributes->item( $i );
@@ -76,13 +80,15 @@ class Factory
 		}
 		// Will break if we decide to store $data differently
 		$context .= $data->saveXML( $data->firstChild );
+		$context .= '<created>' . time() . '</created>';
 		$context .= '</context>';
 		
-		$doc = new \DOMDocument();
+		$doc = new DOMDocument();
 		$doc->loadXML( $context );
+		
 		//echo $doc->saveXML();
 		
-		return new DOMXpath( $doc );
+		return $doc;
 	}
 }
 

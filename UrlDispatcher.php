@@ -2,6 +2,10 @@
 
 namespace BaseXMS;
 
+use BaseXMS\Stdlib\SimpleXMLElement;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
+
 /*
  * The ControllerDispatcher has the request path as in input parameter.
  * Base on the input it returns a simple array containing the response code
@@ -11,7 +15,7 @@ namespace BaseXMS;
  * TODO: just return a simpleXML response object containing the return code etc
  * TODO: Consider a "DispatcherResult" class instead of the return array
  */
-class UrlDispatcher
+class UrlDispatcher implements ServiceLocatorAwareInterface
 {
 	protected $requestPath;
 	protected $services;
@@ -20,14 +24,9 @@ class UrlDispatcher
 	<code>{$code}</code>
 	<id>{$x/@id/string()}</id>
 	<contentclass>{$x/@class/string()}</contentclass>
-	<path>{let $pathParts := $x/ancestor-or-self::*/@path/string() return if( count( $pathParts ) > 1 ) then string-join( $pathParts, "/" ) else "/"}</path>
+	<path>{let $pathParts := $x/ancestor-or-self::*/@id/string() return if( count( $pathParts ) > 1 ) then string-join( $pathParts, "/" ) else "/"}</path>
 </node>';
 	
-	
-	public function __construct( $services )
-	{
-		$this->services = $services;
-	}
 	
 	/**
 	 * Dispatch the url and returns a class name and the tree context Id
@@ -95,7 +94,7 @@ class UrlDispatcher
 		$nodePath = '';
 		foreach( $this->requestPath as $part )
 		{
-			$nodePath .= '/node[@path="' . $part . '" or properties/altPaths//entry[@path="' . $part . '"]]';
+			$nodePath .= '/node[accessPaths//entry[ ( @type="alt" or @type="main" ) and @path="' . $part . '"]]';
 		}
 		
 		$query = 'let $code := 200 return let $x := ' . $nodePath . 'return if( $x ) then ' . $this->returnFormat . ' else null';
@@ -111,7 +110,7 @@ class UrlDispatcher
 	
 		$fullPath = implode( '/', $this->requestPath );
 	
-		$nodePath = '//node[properties/altFullPaths//entry[@path="' . $fullPath . '"]]';
+		$nodePath = '//node[accessPaths//entry[@type="altFull" and @path="' . $fullPath . '"]]';
 
 		$query = 'let $code := 200 return let $x := ' . $nodePath . 'return if( $x ) then ' . $this->returnFormat . ' else null';
 		
@@ -128,30 +127,24 @@ class UrlDispatcher
 		$nodePath = '';
 		foreach( $this->requestPath as $part )
 		{
-			$nodePath .= '/node[@path="' . $part . '" or ';
-			$nodePath .= 'properties/altPaths//entry[@path="' . $part . '"] or ';
-			$nodePath .= 'properties/oldPaths//entry[@path="' . $part . '"]]';
+			$nodePath .= '/node[accessPaths//entry[ ( @type="alt" or @type="main" or @type="old" ) and @path="' . $part . '"]]';
 		}
+
+		$query = 'let $code := 000 return let $x := ' . $nodePath . 'return if( $x ) then ' . $this->returnFormat . ' else null';
 		
-		$query = $nodePath . '/@id/string()';
-		$leafId = $this->services->get( 'xmldb' )->execute( $query );
-		
-		
-		if( $leafId )
+		$orgRequest = $this->services->get( 'xmldb' )->execute( $query, 'xml' );
+				
+		if( $orgRequest instanceof \DOMDocument )
 		{
 			// build an array with involved node ids - reverse order
-			$idPathParts = array( $leafId );
-			
-			while( $leafId = $this->getParentNode( $leafId ) )
-			{
-				$idPathParts[] = $leafId;
-			}
-			
+			$idPathParts = array_reverse( explode( '/', $orgRequest->queryToValue( '/node/path' ) ) );
+
 			// translate requestPath
 			$newRequestPath = array();
 			foreach( array_reverse( $this->requestPath ) as $index => $part )
 			{
-				$query = '//node[@id=' . $idPathParts[ $index ] .']/properties/oldPaths//entry[@path="' . $part . '"]/string()';
+				$query = '//node[@id=' . $idPathParts[ $index ] .']/accessPaths//entry[@type="old" and @path="' . $part . '"]/string()';
+
 				$newPath = $this->services->get( 'xmldb' )->execute( $query );
 				
 				if( $newPath )
@@ -176,20 +169,28 @@ class UrlDispatcher
 	
 		$fullPath = implode( '/', $this->requestPath );
 	
-		$query  = 'let $code := 301 return let $x := //node[properties/oldFullPaths//entry[@path="' . $fullPath . '"]] ';
+		$query  = 'let $code := 301 return let $x := //node[accessPaths//entry[@type="oldFull" and @path="' . $fullPath . '"]] ';
 		$query .= 'return if( $x ) then ' . $this->returnFormat . ' else null';
 
 		$result = $this->services->get( 'xmldb' )->execute( $query, 'simplexml' );
 		
 		return $result ? $result : false;
 	}
-	
-	private function getParentNode( $id )
-	{
-		$query = '//node[@id=' . $id . ']/../@id/string()';
-		$parentId = $this->services->get( 'xmldb' )->execute( $query );
 		
-		return $parentId;
+	/**
+	 * @param ServiceLocatorInterface $serviceLocator
+	 */
+	public function setServiceLocator( ServiceLocatorInterface $serviceLocator )
+	{
+		$this->services = $serviceLocator;
+	}
+	
+	/**
+	 * @return ServiceLocatorInterface
+	 */
+	public function getServiceLocator()
+	{
+		return $this->services;
 	}
 }
 

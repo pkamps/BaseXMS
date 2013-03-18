@@ -6,10 +6,13 @@ use Zend\Permissions\Rbac\Role;
 
 class User
 {
-	public function getRoles()
+	public function getRole()
 	{
-		$roleA = new Role();
+		$roleA = new Role( 'ContentObject' );
+		$roleA->limitations[ 'update' ] = '/node';
+		$roleA->addPermission( 'update' );
 		
+		return $roleA;
 	}
 }
 

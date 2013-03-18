@@ -30,6 +30,19 @@ class DOMDocument extends \DOMDocument
 		$domnode = $doc->importNode( $domnode, true );
 		$this->appendChild( $domnode );
 	}
+	
+	public function query( $query, $contextNode = null )
+	{
+		$xpath = new \DOMXPath( $this );
+		return $xpath->query( $query, $contextNode );
+	}
+
+	public function queryToValue( $query, $contextNode = null )
+	{
+		$xpath = new DOMXpath( $this );
+		return $xpath->queryToValue( $query, $contextNode );
+	}
+	
 }
 
 ?>

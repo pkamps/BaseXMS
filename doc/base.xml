@@ -1,49 +1,36 @@
-<node id='1' path='' class='\BaseXMS\RequestHandler\UiComposer'>
+<node id='1' class='\BaseXMS\RequestHandler\UiComposer'>
+	<accessPaths>
+		<entry type="main" path='' />
+	</accessPaths>
+
 	<content class=''>
-		<meta>
-			<foo>bar</foo>
-		</meta>
 		<sort>0000001</sort>
 		<raw>
 			Hello <b>beautiful</b> World!!
 		</raw>
 	</content>
 
-	<node id='2' path='usa' class='\BaseXMS\RequestHandler\UiComposer'>
-		<properties>
-			<altPaths>
-				<entry path='usa2' />
-				<entry path='usa3' />
-			</altPaths>
-			
-			<oldPaths>
-				<entry path='usa4'>usa</entry>
-			</oldPaths>
-		</properties>
+	<node id='2' class='\BaseXMS\RequestHandler\UiComposer'>
+		<accessPaths>
+			<entry type="main" path='usa' />
+			<entry type="alt" path='usa2' />
+			<entry type="alt" path='usa3' />
+			<entry type="old" path='usa4'>usa</entry>
+		</accessPaths>
 		
 		<content class=''>
 			<sort>0000002</sort>
 			<raw>Hello tree.</raw>
 		</content>
 
-		<node id='3' path='politics' class='\BaseXMS\RequestHandler\UiComposer'>
-			<properties>
-				<altPaths>
-					<entry path='politics2' />
-				</altPaths>
-				
-				<altFullPaths>
-					<entry path='/fips/tests/politics' />
-				</altFullPaths>
-				
-				<oldPaths>
-					<entry path='politics3'>politics2</entry>
-				</oldPaths>
-
-				<oldFullPaths>
-					<entry path='/fips/tests/politics3' />
-				</oldFullPaths>
-			</properties>
+		<node id='3' class='\BaseXMS\RequestHandler\UiComposer'>
+			<accessPaths>
+				<entry type='main' path='politics' />
+				<entry type='alt' path='politics2' />
+				<entry type='altFull' path='/fips/tests/politics' />
+				<entry type='old' path='politics3'>politics2</entry>
+				<entry type='oldFull' path='/fips/tests/politics3' />
+			</accessPaths>
 
 			<content class=''>
 				<raw>
@@ -53,7 +40,11 @@
 			</content>
 		</node>
 
-		<node id='5' path='Halloween' class='\BaseXMS\RequestHandler\UiComposer'>
+		<node id='5' class='\BaseXMS\RequestHandler\UiComposer'>
+			<accessPaths>
+				<entry type='main' path='Halloween' />
+			</accessPaths>
+
 			<content class=''>
 				<raw>
 					See all pictures
@@ -64,17 +55,12 @@
 
 	</node>
 	
-	<node id='4' path='world' class='\Sandbox\RequestHandler\FullPage'>
-
-		<properties>
-			<altPaths>
-				<entry path='world2' />
-			</altPaths>
-			
-			<oldPaths>
-				<entry path='welt'>world2</entry>
-			</oldPaths>
-		</properties>
+	<node id='4' class='\BaseXMS\RequestHandler\UiComposer'>
+		<accessPaths>
+			<entry type='main' path='world' />
+			<entry type='alt' path='world2' />
+			<entry type='old' path='welt'>world2</entry>
+		</accessPaths>
 
 		<content class=''>
 			<raw>Hello World news.</raw>
@@ -82,7 +68,11 @@
 		</content>
 	</node>
 	
-	<node id='6' path='admin' class='\BaseXMS\RequestHandler\UiComposer'>
+	<node id='6' class='\BaseXMS\RequestHandler\UiComposer'>
+		<accessPaths>
+			<entry type='main' path='admin' />
+		</accessPaths>
+		
 		<content class=''>
 			<raw>
 				<a href="/admin/settings">Settings</a>
@@ -91,8 +81,26 @@
 		</content>
 		
 		<node id='7' path='settings' class='\BaseXMS\RequestHandler\UiComposer'>
+			<accessPaths>
+				<entry type='main' path='settings' />
+			</accessPaths>
+			
 			<content class=''></content>
 		</node>
 		
 	</node>
+
+<!-- Not yet sure about the REST API layer location
+	<node id='8' path='REST' class='\BaseXMS\RequestHandler\UiComposer'>
+		<content class=''></content>
+		
+		<node id='9' path='content' class='\BaseXMS\RequestHandler\UiComposer'>
+			<content class=''></content>
+			
+			<node id='10' path='update' class='\BaseXMS\RequestHandler\UiComposer'>
+				<content class=''></content>
+			</node>
+		</node>
+	</node>
+-->
 </node>

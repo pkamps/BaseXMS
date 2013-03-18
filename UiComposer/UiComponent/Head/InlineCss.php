@@ -1,10 +1,11 @@
 <?php 
 
-namespace BaseXMS\UiComponent\Head;
+namespace BaseXMS\UiComposer\UiComponent\Head;
 
-use BaseXMS\UiComposer;
+use BaseXMS\UiComposer\UiComposer;
+use BaseXMS\UiComposer\UiComponent\HtmlWidget;
 
-class InlineCss extends \BaseXMS\UiComponent\HtmlWidget
+class InlineCss extends HtmlWidget
 {
 	public $needsRerender = true;
 	
@@ -18,18 +19,27 @@ class InlineCss extends \BaseXMS\UiComponent\HtmlWidget
 	 */
 	public function rerender()
 	{
-		$data = $this->composer->getSharedData();
+		$cssData = '';
+		$components = $this->uiComposer->getUiComponents();
 		
-		$cssData = $data->inlineCss;
+		//Get all embed CSS
+		foreach( $components as $component )
+		{
+			if( $component instanceof HtmlWidget )
+			{
+				$cssData .= $component->getRenderResult()->embedCss;
+			}
+		}
 		
-		if( isset( $cssData ) && trim( $cssData ) )
+		if( trim( $cssData ) )
 		{
 			// get $doc and add text node under the <style> tag
-			$doc = $this->composer->getDoc();
+			$doc = $this->uiComposer->getDoc();
 			
 			$content = $doc->createTextNode( $this->minify( $cssData ) );
 			
-			$xPath = new \DOMXpath( $this->composer->getDoc() );
+			//TODO: use composer xpath?
+			$xPath = new \DOMXpath( $this->uiComposer->getDoc() );
 			
 			$styleElement = $xPath->query( '//style[@id="inline-css"]' );
 			

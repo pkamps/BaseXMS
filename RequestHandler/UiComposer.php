@@ -2,17 +2,25 @@
 
 namespace BaseXMS\RequestHandler;
 
+use BaseXMS\Stdlib\DOMDocument;
 use Zend\Http\PhpEnvironment\Response as ZendResponse;
-use BaseXMS\DataObjectHandler\ContentObject;
 use Zend\Http\Headers;
+
 
 class UiComposer extends RequestHandler
 {
 	public function getResponse()
 	{
-		$contentObjectHandler = new ContentObject( self::$baseXMLServices );
+		#$contentObjectHandler = new ContentObject();
+		#$contentObjectHandler->setServiceLocator( self::$baseXMLServices );
+		#$data = $contentObjectHandler->read( $this->id, 'xml' );
 		
-		$uiComposer = new \BaseXMS\UiComposer( self::$baseXMLServices, $contentObjectHandler->read( $this->id, 'xml' ) );
+		$doc = new DOMDocument();
+		$doc->loadXML( '<nodeid>'. $this->id .'</nodeid>' );
+		
+		$uiComposer = new \BaseXMS\UiComposer\UiComposer();
+		$uiComposer->setServiceLocator( self::$baseXMLServices );
+		$uiComposer->setContextData( $doc );
 		
 		$response = new ZendResponse();
 

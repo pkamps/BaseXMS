@@ -12,6 +12,8 @@ MVC Zend
 I hock into the MVC Zend Framework. But the logic of building the response object is in BaseXMS.
 BaseXMS is building a response object and sends it back to the Zend MVC. Zend just translate the response object
 into an Zend response.
+I don't think I need to use the MVC - I really don't use a lot of it's features. I think I'd be better of to only use
+the ModuleManager and the ServiceManager
 
 BaseXMS Objects
 --------------------
@@ -22,17 +24,24 @@ The raw content in contentobjects are very individual and the RequestHandle shou
 
 Persistent Object API
 ========================
+The goal is to have a simple API that allows me to store/read XML under the "node/content" tag. Therefore I need to be able to add/delete
+containers ("node" tags). Each "node" container has "properties" tag to specify all access paths.
+The idea is to only allow adding and deleting entire "node" containers. Then have additional API methods to update/read the "properties"
+and "content" tags.
+
 Build an API to handle write/read of content objects and path nodes.
 
 
 No templates but parsing xhtml structure
 ===========================================
 I decided to not use a template engine that executes the template code from top to bottom. Instead I'm using a UiComposer
-which build the xhtml dom document recursively. Each recursive step is using a UiComponent to build parts of the dom document.
-That part uses "<include type="article" />" tags to trigger another recursive step in the UiComposer. The include tag and the composer
-are referenced in the UiComponent. The composer has object vars to collect/re-use data from/for each UiComponent. The include tag element
-is useful to read more element attributes (like '<include type="article" foo="bar" />').
-
+which build the xhtml dom document (or any kind of output really). It searches a given xml structure for "include" tags.
+Each "include" tag creates another UiComposer object which is responsible to render xml which will replace the "include"
+tag. The overall order of execution can be described as multiple run throughs of the UiComposer to search for "include"
+tags until all "include" tags are parsed. For example, a parsed include tag can result in more "include" tags which will
+be rendered in the next run through.
+The UiComponent which is responsible to render a specific "include" tag stores the render result as an object variable.
+If the UiComponent implements the Cachable class, the render result will be cached.
 
 Settings
 =============

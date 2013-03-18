@@ -57,7 +57,8 @@ class SiteAccess
 	{
 		$serviceLocator->get( 'log' )->info( 'Build Response' );
 	
-		$urlDispatcher = new UrlDispatcher( $serviceLocator );
+		$urlDispatcher = new UrlDispatcher();
+		$urlDispatcher->setServiceLocator( $serviceLocator );
 		$baseXMSResponse = $urlDispatcher->dispatch( $path );
 	
 		$response = new ZendResponse();

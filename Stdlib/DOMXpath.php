@@ -2,7 +2,7 @@
 
 namespace BaseXMS\Stdlib;
 
-class DOMXpath extends \DOMXpath
+class DOMXPath extends \DOMXPath
 {
 	/**
 	 * Tries to find a xpath of all given xpaths in $tests that matches the Xpath document.
@@ -36,15 +36,24 @@ class DOMXpath extends \DOMXpath
 	 * @param string $query
 	 * @return mixed
 	 */
-	public function queryToValue( $query )
+	public function queryToValue( $query, $contextNode = null )
 	{
 		$return = false;
 		
-		$result = $this->query( $query );
+		$result = $this->query( $query, $contextNode );
 		
 		if( $result->length )
 		{
-			$return = $result->item(0)->value;
+			$firstElement = $result->item(0);
+
+			if( $firstElement instanceof \DOMElement )
+			{
+				$return = $firstElement->nodeValue;
+			}
+			else
+			{
+				$return = $result->item(0)->value;
+			}
 		}
 		
 		return $return;

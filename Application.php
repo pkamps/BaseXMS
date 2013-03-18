@@ -25,6 +25,7 @@ class Application extends ZendApplication
 		
 		//TODO: moving to a dedicated function
 		$this->serviceManager->setFactory( 'log', 'BaseXMS\Log\Factory' );
+		$this->serviceManager->setService( 'user', new \BaseXMS\User() );
 	}
 	
 	public function onDispatch( $e )

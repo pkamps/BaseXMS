@@ -6,25 +6,37 @@ use BaseXMS\DataObjectHandler\DataObjectHandler;
 
 class Node extends DataObjectHandler
 {
-	function create( $node )
+
+	/**
+	 * @param int $parentId
+	 * @return boolean|int
+	 */
+	public function create( $parentId )
 	{
 		$return = false;
 		
-		if( $this->isValid( $node ) )
+		if( $parentId )
 		{
-			$parentId = (string) $node->attributes()->parentid;
-			
-			if( $parentId )
+			// get new id - probably needs locking
+			$query = 'count( //node ) + 1';
+			$id = $this->services->get( 'xmldb' )->execute( $query );
+
+			if( $id )
 			{
-				unset( $node->attributes()->parentid );
-				
-				$nodeStr = $node->toXML();
-				
-				$query = 'insert node '. $nodeStr .' as last into //node[@id="' . $parentId . '"]';
-				
+				$query = '
+insert node
+	<node id="'. $id .'">
+	  <accessPaths></accessPaths>
+	  <content></content>
+	</node>
+as last into //node[@id="' . $parentId . '"]';
+			
 				$result = $this->services->get( 'xmldb' )->execute( $query );
-				
-				$return = !is_null( $result );
+			
+				if( !is_null( $result ) )
+				{
+					$return = (int) $id;
+				}
 			}
 		}
 		
@@ -40,32 +52,29 @@ class Node extends DataObjectHandler
 		
 		return $this->services->get( 'xmldb' )->execute( $query, 'simplexml' );
 	}
-	
-	function update( $node )
+
+	/**
+	 * @param int $id
+	 * @return boolean
+	 */
+	public function delete( $id )
 	{
 		$return = false;
 		
-		if( $this->isValid( $node ) )
+		$id = (int) $id;
+
+		if( $id )
 		{
-			// getting id
-			$id = (string) $node->attributes()->id;
-			
-			// update properties
-			$properties = $node->properties->asXML();
-			$query = 'replace node //node[@id="' . $id . '"]/properties with ' . $properties;
-				
+			$query = 'delete node //node[@id="'. $id .'"]';
 			$result = $this->services->get( 'xmldb' )->execute( $query );
 			
-			$return = !is_null( $result );
+			if( !is_null( $result ) )
+			{
+				$return = true;
+			}
 		}
-
+		
 		return $return;
-	}
-	
-	function delete( $id )
-	{
-		$query = 'delete node //node[@id="'. $id .'"]';
-		return $this->services->get( 'xmldb' )->execute( $query );
 	}
 
 	public function isValid( $node )

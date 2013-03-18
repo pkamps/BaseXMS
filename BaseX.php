@@ -77,9 +77,9 @@ class BaseX
 	}
 	
 	/**
+	 * Return formats are: text, xml, simplexml
 	 * 
-	 * 
-	 * @param unknown_type $query
+	 * @param sring $query
 	 * @param string $returnFormat
 	 * @param unknown_type $command
 	 * @return unknown

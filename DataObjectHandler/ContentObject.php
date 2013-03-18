@@ -2,16 +2,21 @@
 
 namespace BaseXMS\DataObjectHandler;
 
+use BaseXMS\AssertXPathMatch;
 use BaseXMS\DataObjectHandler\DataObjectHandler;
 
 class ContentObject extends DataObjectHandler
 {
 	protected $nodeOutputFormat =
 '<node id="{$x/../@id}">
-	<path>{let $pathParts := $x/ancestor-or-self::*/@path/string() return if( count( $pathParts ) > 1 ) then string-join( $pathParts, "/" ) else "/"}</path>
+	<path>{let $pathParts := $x/ancestor-or-self::*/accessPaths//entry[@type="main"]/@path/string() return if( count( $pathParts ) > 1 ) then string-join( $pathParts, "/" ) else "/"}</path>
 	{$x}
 </node>';
 		
+	/**
+	 * @param unknown_type $id
+	 * @param unknown_type $format
+	 */
 	public function read( $id, $format = 'text' )
 	{
 		$query = 'let $x := //node[@id="' . $id . '"]/content return '. $this->nodeOutputFormat;
@@ -29,7 +34,9 @@ class ContentObject extends DataObjectHandler
 	{
 		$return = false;
 
-		if( $doc instanceof \DOMDocument )
+		$assertion = new AssertXPathMatch( $doc, 'ContentObject::update' );
+		
+		if( $this->rbac->isGranted( 'ContentObject', 'update', $assertion ) )
 		{
 			if( $this->isValid( $doc ) )
 			{
@@ -42,11 +49,22 @@ class ContentObject extends DataObjectHandler
 				$return = !is_null( $result );
 			}
 		}
+		else
+		{
+			$this->services->get( 'log' )->warn( 'User does not have permission to execute "ContentObject::update"' );
+		}
 		
 		return $return;
 	}
 
-	public function search( $nodeQuery, $order = '', $conditions = '', $overridePermissions = '', $format = 'text' )
+	/**
+	 * @param unknown_type $nodeQuery
+	 * @param unknown_type $order
+	 * @param unknown_type $conditions
+	 * @param unknown_type $overridePermissions
+	 * @param unknown_type $format
+	 */
+	public function search( $nodeQuery, $order = '', $conditions = '', $overridePermissions = '' )
 	{
 		$queryFilter = $nodeQuery . '/content';
 		$order = '$x/sort';
@@ -60,9 +78,15 @@ class ContentObject extends DataObjectHandler
 	 .'}
 </result>';
 
-		return $this->services->get( 'xmldb' )->execute( $query, $format );
+		$result = $this->services->get( 'xmldb' )->execute( $query, 'xml' );
+		
+		return $result->query( '/result/node' );
 	}
 	
+	/**
+	 * @param unknown_type $overridePermissions
+	 * @return Ambigous <string, unknown>
+	 */
 	private function getPermissionFilterString( $overridePermissions )
 	{
 		$return = '';

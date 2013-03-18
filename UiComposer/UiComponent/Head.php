@@ -1,7 +1,8 @@
 <?php 
 
-namespace BaseXMS\UiComponent;
-use BaseXMS\UiComposer;
+namespace BaseXMS\UiComposer\UiComponent;
+
+use BaseXMS\UiComposer\UiComposer;
 
 class Head extends HtmlWidget
 {
