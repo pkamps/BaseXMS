@@ -120,6 +120,36 @@ class UiComponent
 	}
 	
 	/**
+	 * Stores the object in the renderResult and returns a reference id
+	 * 
+	 * @param mixed $object
+	 * @return string
+	 */
+	protected function referenceObject( $object )
+	{
+		$objectId = spl_object_hash( $object );
+		$refId = $this->getId() . '::' . $objectId;
+
+		$this->renderResult->setReferencedObject( $objectId, $object);
+		
+		return $refId;
+	}
+	
+	/**
+	 * Returns an object based on the given reference
+	 * 
+	 * @param string $ref
+	 */
+	protected function getObjectByReference( $ref )
+	{
+		$parts = explode( '::', $ref );
+
+		$uiComponent = $this->uiComposer->getUiComponent( $parts[ 0 ] );
+		
+		return $uiComponent->getRenderResult()->getReferencedObject( $parts[ 1 ] );
+	}
+	
+	/**
 	 * @return \BaseXMS\UiComposer\UiComponent\mixed
 	 */
 	protected function getRenderResult()

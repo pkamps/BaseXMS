@@ -4,6 +4,7 @@ namespace BaseXMS\UiComposer\UiComponent\Head;
 
 use BaseXMS\UiComposer\UiComposer;
 use BaseXMS\UiComposer\UiComponent\HtmlWidget;
+use BaseXMS\FC;
 
 class JsFile extends HtmlWidget
 {
@@ -11,21 +12,7 @@ class JsFile extends HtmlWidget
 	
 	public function getXml()
 	{
-		return
-<<<HTML
-<div id="jsfiles" />
-
-<script type="text/javascript">
-$(function()
-{
-	tinyMCE.init(
-	{
-		mode     : 'textareas',
-		encoding : 'xml'
-	});
-});
-</script>
-HTML;
+		return '<script id="js-file" type="text/javascript" src="" />';
 	}
 	
 	/**
@@ -33,41 +20,50 @@ HTML;
 	 */
 	public function rerender()
 	{
-		$jsFiles = array();
-		$components = $this->uiComposer->getUiComponents();
+		$fileContent = $this->getFileContent( 'jsFileContent' );
 		
-		//Get js files
-		foreach( $components as $component )
+		if( trim( $fileContent ) )
 		{
-			if( $component instanceof HtmlWidget )
+			$httpFileNamePath = '/generated/' . md5( $fileContent ) . '.js';
+			$fileNamePath = 'public' . $httpFileNamePath;
+
+			if( !file_exists( $fileNamePath ) )
 			{
-				$jsFiles = array_merge( $jsFiles, $component->getRenderResult()->jsFiles );
-			}
-		}
-		
-		$jsFilesHtml = '';
-		if( !empty( $jsFiles ) )
-		{
-			foreach( $jsFiles as $file )
-			{
-				$jsFilesHtml .= '<script type="text/javascript" src="'. $file .'" charset="utf-8" />';
+				file_put_contents( $fileNamePath, $fileContent );
 			}
 			
-			// get $doc and add text node under the <style> tag
+			// get $doc and add the href
 			$doc = $this->uiComposer->getDoc();
 			
-			$fragment = $doc->createDocumentFragment();
-			$fragment->appendXML( $jsFilesHtml );
+			//TODO: use composer xpath?
+			$xPath = new \DOMXpath( $this->uiComposer->getDoc() );
+				
+			$linkElement = $xPath->query( '//script[@id="js-file"]' );
 			
-			$xpath = new \DOMXPath( $doc );
-			$containerElement = $xpath->query( '//*[@id="jsfiles"]' );
-			$containerElement = $containerElement->item(0);
-			
-			$containerElement->appendChild( $fragment );
+			$linkElement->item(0)->setAttribute( 'src', FC::assetLink( $httpFileNamePath ) );
 		}
 		
 		$this->needsRerender = false;
 	}
+	
+	protected function getFileContent( $property )
+	{
+		$return = '';
+		$components = $this->uiComposer->getUiComponents();
+		
+		//Get all CSS file content
+		foreach( $components as $component )
+		{
+			//TODO: check renderresult instead of component type
+			if( $component instanceof HtmlWidget )
+			{
+				$return .= $component->getRenderResult()->$property;
+			}
+		}
+		
+		return $return;
+	}
+	
 }
 
 ?>

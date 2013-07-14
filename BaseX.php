@@ -2,11 +2,11 @@
 
 namespace BaseXMS;
 
+use BaseXClient\Session;
 use BaseXMS\Stdlib\DOMDocument;
-
-use BaseXClient\Session,
-    BaseXMS\Accumulator,
-    BaseXMS\Stdlib\SimpleXMLElement as SimpleXMLElement;
+use BaseXMS\Accumulator;
+use BaseXMS\Stdlib\SimpleXMLElement as SimpleXMLElement;
+use BaseXMS\Mvc\BaseXMSService;
 
 /**
  * @author pek
@@ -18,54 +18,50 @@ use BaseXClient\Session,
  * It should handle the connection details, accumulator, error handling
  *
  */
-class BaseX
+class BaseX extends BaseXMSService
 {
 	private $session;
-	private $connection = array( 'host' => 'localhost',
-	                             'port' => 1984,
-	                             'user' => 'admin',
-	                             'pass' => 'admin',
-	                             'db'   => 'base'
-	                           );
-	private $accumulator;
-	private $log;
 	
 	/**
-	 * Takes a given array with connection details
-	 * 
-	 * @param array $connection
-	 * $param Accumulator $accumulator
+	 * @var array
 	 */
-	function __construct( $services )
-	{
-		$this->log = $services->get( 'log' );
-		$config    = $services->get( 'config' );
-
-		if( !empty( $config[ 'BaseX' ] ) )
-		{
-			$this->connection = array_merge( $this->connection, $config[ 'BaseX' ] );
-		}
-
-		$this->accumulator = $services->get( 'accumulator' );
-	}
-	
+	private $connectionDetails = array(
+			'host' => 'localhost',
+			'port' => 1984,
+			'user' => 'admin',
+			'pass' => 'admin',
+			'db'   => 'base'
+	);
+		
 	/**
 	 * @throws Exception
 	 * @return boolean
 	 */
-	public function getSession()
+	public function getSession( $openDb = true )
 	{
 		if( !$this->session )
 		{
+			// merge config with default config
+			$config = $this->serviceManager->get( 'config' );
+
+			if( !empty( $config[ 'BaseX' ] ) )
+			{
+				$this->connectionDetails = array_merge( $this->connectionDetails, $config[ 'BaseX' ] );
+			}
+			
 			try
 			{
-				$this->session = new Session( $this->connection[ 'host' ],
-				                              $this->connection[ 'port' ],
-				                              $this->connection[ 'user' ],
-				                              $this->connection[ 'pass' ]
+				$this->session = new Session( $this->connectionDetails[ 'host' ],
+				                              $this->connectionDetails[ 'port' ],
+				                              $this->connectionDetails[ 'user' ],
+				                              $this->connectionDetails[ 'pass' ]
 				);
 			
-				$this->session->execute( 'OPEN ' . $this->connection[ 'db' ] );
+				// select a DB
+				if( $openDb )
+				{
+					$this->openDb( $this->connectionDetails[ 'db' ] );
+				}
 			}
 			catch( \Exception $e )
 			{
@@ -77,36 +73,51 @@ class BaseX
 	}
 	
 	/**
-	 * Return formats are: text, xml, simplexml
-	 * 
-	 * @param sring $query
-	 * @param string $returnFormat
-	 * @param unknown_type $command
-	 * @return unknown
+	 * @param string $name
 	 */
-	public function execute( $query,
-	                         $returnFormat = 'text',
-			                 $command = 'XQUERY' )
+	public function openDb( $name )
 	{
+		if( $name )
+		{
+			return $this->session->execute( 'OPEN ' . $name );
+		}
+	}
 
 		
+	/**
+	 * Return formats are: text, xml, simplexml
+	 * 
+	 * @param string $query
+	 * @param string $returnFormat
+	 * @param string $command
+	 * @param boolean $openDb
+	 * @throws Exception
+	 * @return Ambigous <string, unknown_type>
+	 */
+	public function execute(
+			$query,
+			$returnFormat = 'text',
+			$command = 'XQUERY',
+			$openDb = true
+	)
+	{
 		// build query
 		$query = $command . ' ' . $query;
-		$this->log->debug( $query );
+		$this->serviceManager->get( 'log' )->debug( $query );
 		
-		if( $this->accumulator ) $this->accumulator->start( 'baseX' );
+		if( $this->serviceManager->has( 'accumulator' ) ) $this->serviceManager->get( 'accumulator' )->start( 'baseX' );
 
 		try
 		{
-			$resultText = $this->getSession()->execute( $query );
+			$resultText = $this->getSession( $openDb )->execute( $query );
 		}
 		catch( \Exception $e )
 		{
-			$this->log->err( $e->getMessage() );
+			$this->serviceManager->get( 'log' )->err( $e->getMessage() );
 			throw $e;
 		}
 		
-		if( $this->accumulator ) $this->accumulator->stop( 'baseX' );
+		if( $this->serviceManager->has( 'accumulator' ) ) $this->serviceManager->get( 'accumulator' )->stop( 'baseX' );
 		
 		return $this->transformToFormat( $resultText, $returnFormat );
 	}

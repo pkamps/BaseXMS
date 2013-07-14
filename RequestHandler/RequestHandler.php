@@ -3,57 +3,62 @@
 namespace BaseXMS\RequestHandler;
 
 use Zend\Http\PhpEnvironment\Response as ZendResponse;
+use Zend\ServiceManager\ServiceLocatorAwareInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 
-class RequestHandler
+class RequestHandler implements ServiceLocatorAwareInterface
 {
-	static protected $baseXMLServices;
+	protected $serviceManager;
 	protected $siteaccess;
-	protected $id;
 	
-	public static function factory( $id, $requestHandlerClass, $siteAccess )
-	{
-		$return = null;
-		
-		self::$baseXMLServices = $siteAccess->getBaseXMSServices();
-		
-		if( $requestHandlerClass )
-		{
-			self::$baseXMLServices->get( 'log' )->info( 'RequestHandler class name: "' . $requestHandlerClass . '".' );
-			
-			$requestHandlerClass = $requestHandlerClass ? $requestHandlerClass : '\BaseXMS\RequestHandler\RequestHandler';
-				
-			if( class_exists( $requestHandlerClass ) )
-			{
-				$return = new $requestHandlerClass;
-			}
-			else
-			{
-				self::$baseXMLServices->get( 'log' )->warn( 'Could not find RequestHandler class: "' . $requestHandlerClass . '".' );
-			}
-	
-			// couldn't get a valid class
-			if( !( $return instanceof RequestHandler ) )
-			{
-				$return = new RequestHandler();
-			}
-	
-				
-			//TODO: use ini function?
-			$return->id = $id;
-			$return->siteAccess = $siteAccess;
-		}
-	
-		return $return;
-	}
+	/**
+	 * @var DomDocument
+	 */
+	protected $context;
 	
 	public function getResponse()
 	{
-		self::$baseXMLServices->get( 'log' )->warn( 'No concrete RequestHandler found.' );
+		$this->serviceManager->get( 'log' )->warn( 'No concrete RequestHandler found.' );
 		
 		$response = new ZendResponse();
 		$response->setStatusCode( 500 );
 		return $response;
 	}
+	
+	/**
+	 * @param DomDocument $context
+	 * @return \BaseXMS\RequestHandler\RequestHandler
+	 */
+	public function setContext( \DomDocument $context )
+	{
+		$this->context = $context;
+		return $this;
+	}
+
+	public function setSiteAccess( $siteAccess )
+	{
+		$this->siteAccess = $siteAccess;
+		return $this;
+	}
+	
+	
+	/* (non-PHPdoc)
+	 * @see Zend\ServiceManager.ServiceLocatorAwareInterface::setServiceLocator()
+	*/
+	public function setServiceLocator( ServiceLocatorInterface $serviceLocator )
+	{
+		$this->serviceManager = $serviceLocator;
+		return $this;
+	}
+	
+	/* (non-PHPdoc)
+	 * @see Zend\ServiceManager.ServiceLocatorAwareInterface::getServiceLocator()
+	*/
+	public function getServiceLocator()
+	{
+		return $this->serviceManager;
+	}
+	
 }
 
 ?>

@@ -12,17 +12,18 @@ class Factory implements FactoryInterface
 	{
 		$l = new Logger();
 		
-		if( $serviceLocator->has( 'application' ) )
+		// Let modules add a log writer
+		if( $serviceLocator->has( 'ModuleManager' ) )
 		{
-			$eventManager = $serviceLocator->get( 'application' )->getBaseXMSEventManager();
-			$eventManager->trigger( 'AddLogWriter', $this, $l );
+			$serviceLocator->get( 'ModuleManager' )->getEventManager()->trigger( 'AddLogWriter', $this, $l );
 		}
-
+		
 		if( $l->getWriters()->isEmpty() )
 		{
 			$l->addWriter( new Null() );
 		}
-		
+		\Zend\Log\Logger::registerErrorHandler( $l );
+
 		return $l;
 	}
 }

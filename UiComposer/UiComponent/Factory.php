@@ -20,7 +20,7 @@ class Factory
 	{
 		$services = $composer->getServiceLocator();
 		
-		$context = self::getContextDescription( $incElement, $composer->getData() );
+		$context = self::getContextDescription( $incElement, $composer->getContextData() );
 		
 		$xpath = new DOMXpath( $context );
 		$class = $xpath->getFirstMatchingXpath( self::getRules( $services ) );
@@ -46,7 +46,7 @@ class Factory
 		
 		if( !isset( self::$rules ) )
 		{
-			$config = $services->get( 'application' )->getConfig();
+			$config = $services->get( 'config' );
 	
 			$designs = $config[ 'designs' ];
 			
@@ -78,8 +78,13 @@ class Factory
 			$item = $attributes->item( $i );
 			$context .= '<'. $item->name .'>'. $item->value .'</'. $item->name .'>';
 		}
+		
 		// Will break if we decide to store $data differently
-		$context .= $data->saveXML( $data->firstChild );
+		if( $data->firstChild )
+		{
+			$context .= $data->saveXML( $data->firstChild );
+		}
+		
 		$context .= '<created>' . time() . '</created>';
 		$context .= '</context>';
 		

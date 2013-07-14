@@ -7,9 +7,12 @@ use BaseXMS\DataObjectHandler\DataObjectHandler;
 class Node extends DataObjectHandler
 {
 
+
 	/**
+	 * Creates a new node with basic structure
+	 * 
 	 * @param int $parentId
-	 * @return boolean|int
+	 * @return boolean|string
 	 */
 	public function create( $parentId )
 	{
@@ -17,13 +20,9 @@ class Node extends DataObjectHandler
 		
 		if( $parentId )
 		{
-			// get new id - probably needs locking
-			$query = 'count( //node ) + 1';
-			$id = $this->services->get( 'xmldb' )->execute( $query );
-
-			if( $id )
-			{
-				$query = '
+			$id = $this->buildId();
+			
+			$query = '
 insert node
 	<node id="'. $id .'">
 	  <accessPaths></accessPaths>
@@ -31,18 +30,21 @@ insert node
 	</node>
 as last into //node[@id="' . $parentId . '"]';
 			
-				$result = $this->services->get( 'xmldb' )->execute( $query );
-			
-				if( !is_null( $result ) )
-				{
-					$return = (int) $id;
-				}
-			}
+			$result = $this->services->get( 'xmldb' )->execute( $query );
+		
+			$return = $id;
+		}
+		else
+		{
+			throw new \Exception( 'Missing parent ID while creating node.' );
 		}
 		
 		return $return;
 	}
 	
+	/**
+	 * @param string $id
+	 */
 	function read( $id )
 	{
 		$returnFormat = '<node id="{$x/@id}" class="{$x/@class}" path="{$x/@path}" parentid="{$x/../@id}">{$x/properties}</node>';
@@ -50,7 +52,7 @@ as last into //node[@id="' . $parentId . '"]';
 		
 		//echo $query;
 		
-		return $this->services->get( 'xmldb' )->execute( $query, 'simplexml' );
+		return $this->services->get( 'xmldb' )->execute( $query, 'xml' );
 	}
 
 	/**
@@ -91,6 +93,11 @@ as last into //node[@id="' . $parentId . '"]';
 		$dom->appendChild( $domnode );
 		
 		return $dom;
+	}
+	
+	protected function buildId()
+	{
+		return uniqid( '', true );
 	}
 	
 	protected function getSchema()

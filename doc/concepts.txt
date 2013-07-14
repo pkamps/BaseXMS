@@ -73,10 +73,8 @@ Execution Flow
 =================
 1) public/index.php
    - gets zend application instance
-   - BaseXML overrides the standard zend application
    
 2) application instance
-   - add a onDispatch listener
    - gets a siteaccess instance
    - asks the siteaccess instance for a Response 
    
@@ -101,3 +99,33 @@ event trigger versus config files
 ====================================
 The log solution uses a trigger event to register log writers. Other factories like the siteaccesses use the settings.
 Should I go a pure PHP way or should I work with settings?
+
+ACLs
+==============
+I'm using Zend\Permissions\Rbac as a base for a permission system. The idea is to have a user object that has a function to
+get a role. That parent role can contain multiple subroles. One role is 'PermissionXML' which contains an XML document that
+describes all permissions a user has. Here an example:
+
+<policies>
+	<policy id="canDoSomething"></policy>
+	<policy id="update_content">/node[@id="2"]</policy>
+</policies>
+
+The example show 2 types of permissons. "canDoSomething" just specifies that the user has this permission without any
+limitations. The "update_content" permission has extra limitations (specified as an xpath) which limits the update
+operation to node with id = 2.
+
+The code that does the content update needs to be wrapped into a permission check. Here an example:
+
+if( $rbac->isGranted( 'PermissionXML', 'query', new AssertXPathMatch( '/policy[@id="update_content"]', $updateDoc ) ) )
+{
+	// code which updates the content 
+}
+
+You can see that we check for the 'PermissionXML/query' with a given limitation. The zend rbac system uses Assertions
+for this task. The AssertXPathMatch will check if the user has the permission (policy) "update_content" and then it will
+execute the given limitation '/node[@id="2"] against the given $updateDoc. That way we can only allow the user to
+do specific update operations.
+
+Limiting the search results works similar, for now I decided to have another role for a user that just specifies a
+XQUERY condition to limit the return search result.

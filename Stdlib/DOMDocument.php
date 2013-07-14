@@ -24,6 +24,10 @@ class DOMDocument extends \DOMDocument
 		return $doc;
 	}
 	
+	/**
+	 * 
+	 * @param SimpleXMLElement $simpleXml
+	 */
 	public function loadSimpleXml( $simpleXml )
 	{
 		$domnode = dom_import_simplexml( $simpleXml );

@@ -9,7 +9,8 @@ class BaseXFactory implements FactoryInterface
 {
 	public function createService( ServiceLocatorInterface $serviceLocator )
 	{
-		$return = new BaseX( $serviceLocator );
+		$return = new BaseX();
+		$return->setServiceLocator( $serviceLocator );
 		return $return;
 	}
 }

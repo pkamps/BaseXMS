@@ -13,10 +13,11 @@ class HtmlWidget extends UiComponent
 	 */
 	protected function render()
 	{
-		$this->renderResult           = new RenderResult();
-		$this->renderResult->output   = $this->getXml();
-		$this->renderResult->embedCss = $this->getEmbedCss();
-		$this->renderResult->jsFiles  = $this->getJsFiles();
+		$this->renderResult                 = new RenderResult();
+		$this->renderResult->output         = $this->getXml();
+		$this->renderResult->cssInline      = $this->getCssInline();
+		$this->renderResult->cssFileContent = $this->getCssFileContent();
+		$this->renderResult->jsFileContent  = $this->getJsFileContent();
 		
 		return $this;
 	}
@@ -32,14 +33,25 @@ class HtmlWidget extends UiComponent
 	/**
 	 * @return string
 	 */
-	protected function getEmbedCss()
+	protected function getCssInline()
 	{
 		return '';
 	}
 	
-	protected function getJsFiles()
+	/**
+	 * @return string
+	 */
+	protected function getCssFileContent()
 	{
-		return array();
+		return '';
+	}
+	
+	/**
+	 * @return string
+	 */
+	protected function getJsFileContent()
+	{
+		return '';
 	}
 }
 

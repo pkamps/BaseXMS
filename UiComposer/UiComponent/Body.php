@@ -13,7 +13,6 @@ class Body extends HtmlWidget //implements Cacheable
 '<body>
 	<include type="content" />
 	<include type="jsfile" />
-	<include type="debug" />
 </body>';
 	}
 	

@@ -8,9 +8,9 @@ use BaseXMS\DataObjectHandler\DataObjectHandler;
 class ContentObject extends DataObjectHandler
 {
 	protected $nodeOutputFormat =
-'<node id="{$x/../@id}">
+'<node id="{$x/@id}">
 	<path>{let $pathParts := $x/ancestor-or-self::*/accessPaths//entry[@type="main"]/@path/string() return if( count( $pathParts ) > 1 ) then string-join( $pathParts, "/" ) else "/"}</path>
-	{$x}
+	{$x/content}
 </node>';
 		
 	/**
@@ -19,7 +19,7 @@ class ContentObject extends DataObjectHandler
 	 */
 	public function read( $id, $format = 'text' )
 	{
-		$query = 'let $x := //node[@id="' . $id . '"]/content return '. $this->nodeOutputFormat;
+		$query = 'let $x := //node[@id="' . $id . '"] return '. $this->nodeOutputFormat;
 		
 		return $this->services->get( 'xmldb' )->execute( $query, $format );
 	}
@@ -27,33 +27,48 @@ class ContentObject extends DataObjectHandler
 	/**
 	 * Update the content in the persitent story.
 	 * 
-	 * @param DOMDocument $doc
+	 * @param \BaseXMS\Stdlib\DOMDocument $doc
 	 * @return boolean
 	 */
-	public function update( \DOMDocument $doc )
+	public function update( \BaseXMS\Stdlib\DOMDocument $doc )
 	{
 		$return = false;
 
-		$assertion = new AssertXPathMatch( $doc, 'ContentObject::update' );
-		
-		if( $this->rbac->isGranted( 'ContentObject', 'update', $assertion ) )
+		if( !( $doc instanceof BaseXMS\Stdlib\DOMDocument ) )
 		{
 			if( $this->isValid( $doc ) )
 			{
-				// getting id, new content and store it
-				$id = $doc->firstChild->getAttribute( 'id' );
-				$newContent = $doc->saveXML( $doc->firstChild->firstChild );
-				$query = 'replace node //node[@id="' . $id . '"]/content with ' . $newContent;
-				$result = $this->services->get( 'xmldb' )->execute( $query );
-				
-				$return = !is_null( $result );
+				//TODO: extend rbac and have a simple isGranted method
+				if( $this->rbac->isGranted( 'PermissionXML', 'query', new AssertXPathMatch( '/policy', $doc ) ) )
+				{
+					// getting id, new content and store it
+					$id         = $doc->queryToValue( '/node/@id' );
+					$newContent = $doc->saveXML( $doc->query( '/node/content' )->item(0) );
+					
+					$query = 'replace node //node[@id="' . $id . '"]/content with ' . $newContent;
+					//echo $query . "\n\n";
+										
+					$result = $this->services->get( 'xmldb' )->execute( $query );
+					
+					$return = !is_null( $result );
+				}
+				else
+				{
+					$this->services->get( 'log' )->warn( 'User does not have permission to execute "ContentObject::update"' );
+				}
+			}
+			else
+			{
+				throw new \Exception( 'DOM doc is not validating against content schema' );
 			}
 		}
 		else
 		{
-			$this->services->get( 'log' )->warn( 'User does not have permission to execute "ContentObject::update"' );
+			$message = 'No valid doc provided';
+			$this->services->get( 'log' )->warn( $message );
+			throw new \Exception( $message );
 		}
-		
+
 		return $return;
 	}
 
@@ -66,8 +81,8 @@ class ContentObject extends DataObjectHandler
 	 */
 	public function search( $nodeQuery, $order = '', $conditions = '', $overridePermissions = '' )
 	{
-		$queryFilter = $nodeQuery . '/content';
-		$order = '$x/sort';
+		$queryFilter = $nodeQuery;
+		$order = '$x/content/sort';
 		
 		$query =
 '<result>
@@ -78,6 +93,8 @@ class ContentObject extends DataObjectHandler
 	 .'}
 </result>';
 
+		//echo $query;
+		
 		$result = $this->services->get( 'xmldb' )->execute( $query, 'xml' );
 		
 		return $result->query( '/result/node' );
@@ -96,8 +113,9 @@ class ContentObject extends DataObjectHandler
 		}
 		else
 		{
-			//TODO: replace 1=1 with user permissions
-			$return = '1=2 or 1=1';
+			//TODO: handle empty SearchPermissionFilter
+			$filterRole = $this->rbac->getRole( 'SearchPermissionFilter' )->filter;
+			$return = '1=2 or $x'. $filterRole;
 		}
 		
 		return $return;
@@ -117,7 +135,7 @@ class ContentObject extends DataObjectHandler
 			<xs:element ref="content" minOccurs="1" maxOccurs="1" />
 		</xs:sequence>
 		
-		<xs:attribute name="id" type="xs:integer" use="required"/>
+		<xs:attribute name="id" type="xs:string" use="required"/>
     </xs:complexType>
 </xs:element>
 

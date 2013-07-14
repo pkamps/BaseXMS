@@ -69,6 +69,8 @@ class AccessPaths extends DataObjectHandler
 		<xs:sequence>
 			<xs:element ref="entry" minOccurs="1" maxOccurs="unbounded" />
 		</xs:sequence>
+		
+		<xs:attribute name="class" type="xs:string" use="required"/>
 	</xs:complexType>
 </xs:element>
 

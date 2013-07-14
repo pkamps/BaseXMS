@@ -7,34 +7,40 @@ use Zend\Permissions\Rbac\Rbac;
 
 class AssertXPathMatch implements AssertionInterface
 {
-	private $doc;
-	private $permission;
+	private $accessQuery;
+	private $contextDoc;
 
-	public function __construct( \DOMDocument $doc, $permission )
+	public function __construct( $accessQuery, $contextDoc )
 	{
-		$this->doc = $doc;
-		$this->permission = $permission;
+		$this->accessQuery = $accessQuery;
+		$this->contextDoc  = $contextDoc;
 	}
 
 	public function assert( Rbac $rbac )
 	{
 		$return = false;
-
-		$permissionParts = explode( '::', $this->permission );
 		
-		if( count( $permissionParts ) == 2 )
+		$role = $rbac->getRole( 'PermissionXML' );
+		
+		$accessResult = $role->doc->query( $this->accessQuery );
+		
+		if( $accessResult->length > 0 )
 		{
-			$role = $rbac->getRole( $permissionParts[0] );
+			$limitationQuery = trim( $accessResult->item(0)->nodeValue );
 			
-			$limitation = $role->limitations[ $permissionParts[1] ];
-			
-			if( $limitation )
+			if( $limitationQuery )
 			{
-				$xpath = new \DOMXpath( $this->doc );
-				$return = $xpath->query( $limitation )->length > 0;
+				if( $this->contextDoc instanceof \BaseXMS\Stdlib\DOMDocument )
+				{
+					$return = $this->contextDoc->query( $limitationQuery )->length > 0;
+				}
+			}
+			else
+			{
+				$return = true;
 			}
 		}
-				
+		
 		return $return;
 	}
 }

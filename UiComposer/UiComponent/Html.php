@@ -18,10 +18,23 @@ class Html extends HtmlWidget
 </html>';
 	}
 	
-	protected function getJsFiles()
+	protected function getJsFileContent()
 	{
-		return array( 'js/jquery-1.9.1.js' );
+		$return  = file_get_contents( 'module/BaseXMSZend/public/js/jquery-1.9.1.js' );
+		$return .= file_get_contents( 'module/BaseXMSZend/public/js/bootstrap.min.js' );
+		//jquery-ui-1.10.1.custom.min.js
+		
+		return $return;
 	}
+	
+	protected function getCssFileContent()
+	{
+		$return  = file_get_contents( 'module/BaseXMSZend/public/css/bootstrap.min.css' );
+		$return .= file_get_contents( 'module/BaseXMSZend/public/css/bootstrap-responsive.min.css' );
+	
+		return $return;
+	}
+	
 }
 
 ?>

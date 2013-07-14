@@ -2,7 +2,8 @@
 
 namespace BaseXMS\UiComposer;
 
-use BaseXMS\Stdlib\SimpleXMLElement as SimpleXMLElement;
+use BaseXMS\Stdlib\DOMDocument;
+
 use Zend\ServiceManager\ServiceLocatorAwareInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Cache\StorageFactory;
@@ -14,11 +15,6 @@ use Zend\Cache\PatternFactory;
  */
 class UiComposer implements ServiceLocatorAwareInterface
 {
-	/*
-	 *  Return is build in $doc
-	 */
-	private $doc;
-	
 	/**
 	 * @var string
 	 */
@@ -42,6 +38,14 @@ class UiComposer implements ServiceLocatorAwareInterface
 	 */
 	private $contextData;
 	
+	/*
+	 *  Return is build in $doc
+	 */
+	private $doc;
+	
+	/**
+	 * @var \DOMXPath
+	 */
 	private $xpath;
 	
 	/**
@@ -58,32 +62,19 @@ class UiComposer implements ServiceLocatorAwareInterface
 	
 	public function run()
 	{
-		return $this->createDoc()->buildDoc()->rerender();
-	}
-	
-	/**
-	 * Builds the doc and the xpath which is needed for buildDoc
-	 * 
-	 * @return \BaseXMS\UiComposer
-	 */
-	protected function createDoc()
-	{
-		$domImpl = new \DOMImplementation();
-		
-		if( $this->docTypeQualifiedName )
+		if( $this->services->has( 'accumulator' ) )
 		{
-			$doctype   = $domImpl->createDocumentType( $this->docTypeQualifiedName );
-			$this->doc = $domImpl->createDocument( null, 'include', $doctype );
-		}
-		else
-		{
-			$this->doc = $domImpl->createDocument( null, 'include' );
+			$this->services->get( 'accumulator' )->start( 'UiComposer' );
 		}
 		
-		$this->doc->lastChild->setAttribute( 'type', 'root' );
+		$this->buildDoc()->rerender();
 		
-		$this->xpath = new \DOMXpath( $this->doc );
-
+		//TODO: doesn't work - get's rendered before we collected the data
+		if( $this->services->has( 'accumulator' ) )
+		{
+			$this->services->get( 'accumulator' )->stop( 'UiComposer' );
+		}
+		
 		return $this;
 	}
 	
@@ -99,7 +90,7 @@ class UiComposer implements ServiceLocatorAwareInterface
 		{
 			$this->buildMaxDepthCount++;
 			
-			$includes = $this->xpath->query( '//include' );
+			$includes = $this->getXPath()->query( '//include' );
 			
 			$had_includes = $includes->length > 0;
 			
@@ -155,6 +146,11 @@ class UiComposer implements ServiceLocatorAwareInterface
 		return $this;
 	}
 	
+	/**
+	 * Go through the list of rendered components and call rerender.
+	 * 
+	 * @return \BaseXMS\UiComposer\UiComposer
+	 */
 	protected function rerender()
 	{
 		if( !empty( $this->uiComponents ) )
@@ -172,6 +168,9 @@ class UiComposer implements ServiceLocatorAwareInterface
 		return $this;
 	}
 	
+	/**
+	 * @return string
+	 */
 	public function output()
 	{
 		$output = $this->doc->saveHTML();
@@ -190,7 +189,35 @@ class UiComposer implements ServiceLocatorAwareInterface
 	 */
 	public function getDoc()
 	{
+		if( !$this->doc )
+		{
+			$this->createDoc();
+		}
+		
 		return $this->doc;
+	}
+	
+	/**
+	 * @param \DOMDocument $doc
+	 */
+	public function setDoc( \DOMDocument $doc )
+	{
+		$this->doc = $doc;
+	}
+	
+	/**
+	 * Lazy load of the xpath
+	 * 
+	 * @return DOMXPath
+	 */
+	public function getXPath()
+	{
+		if( !$this->xpath )
+		{
+			$this->xpath = new \DOMXpath( $this->getDoc() );
+		}
+		
+		return $this->xpath;
 	}
 	
 	/**
@@ -207,10 +234,18 @@ class UiComposer implements ServiceLocatorAwareInterface
 	 */
 	public function getContextData()
 	{
+		if( !$this->contextData )
+		{
+			$this->contextData = new DOMDocument();
+		}
+		
 		return $this->contextData;
 	}
 	
 	/**
+	 * Context data is anything that influence the Componenet lookup and possible
+	 * servers as input to parse a component.
+	 * 
 	 * @param BaseXMS\Stdlib\DOMDocument $doc
 	 * @return \BaseXMS\UiComposer\UiComposer
 	 */
@@ -236,12 +271,15 @@ class UiComposer implements ServiceLocatorAwareInterface
 		return $this->uiComponents[ $instanceId ];
 	}
 	
+	/* (non-PHPdoc)
+	 * @see Zend\ServiceManager.ServiceLocatorAwareInterface::setServiceLocator()
+	 */
 	public function setServiceLocator( ServiceLocatorInterface $serviceLocator )
 	{
 		$this->services = $serviceLocator;
 
 		// adding cache service
-		if( true )
+		if( !$this->services->has( 'cache' ) )
 		{
 			$cache = new \BaseXMS\Cache\Storage\Adapter\Filesystem();
 			$cache->setOptions( array( 'cache_dir' => 'data/cache' ) );
@@ -250,10 +288,38 @@ class UiComposer implements ServiceLocatorAwareInterface
 		}
 	}
 	
+	/* (non-PHPdoc)
+	 * @see Zend\ServiceManager.ServiceLocatorAwareInterface::getServiceLocator()
+	 */
 	public function getServiceLocator()
 	{
 		return $this->services;
 	}
+	
+	/**
+	 * Builds the a DOMDoc with only one element "root"
+	 *
+	 * @return \BaseXMS\UiComposer
+	 */
+	protected function createDoc()
+	{
+		$domImpl = new \DOMImplementation();
+	
+		if( $this->docTypeQualifiedName )
+		{
+			$doctype   = $domImpl->createDocumentType( $this->docTypeQualifiedName );
+			$this->doc = $domImpl->createDocument( null, 'include', $doctype );
+		}
+		else
+		{
+			$this->doc = $domImpl->createDocument( null, 'include' );
+		}
+	
+		$this->doc->lastChild->setAttribute( 'type', 'root' );
+	
+		return $this;
+	}
+	
 }
 
 ?>

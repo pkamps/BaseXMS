@@ -1,5 +1,5 @@
-<node id='1' class='\BaseXMS\RequestHandler\UiComposer'>
-	<accessPaths>
+<node id='1'>
+	<accessPaths class='\BaseXMS\RequestHandler\UiComposer'>
 		<entry type="main" path='' />
 	</accessPaths>
 
@@ -10,8 +10,8 @@
 		</raw>
 	</content>
 
-	<node id='2' class='\BaseXMS\RequestHandler\UiComposer'>
-		<accessPaths>
+	<node id='2'>
+		<accessPaths class='\BaseXMS\RequestHandler\UiComposer'>
 			<entry type="main" path='usa' />
 			<entry type="alt" path='usa2' />
 			<entry type="alt" path='usa3' />
@@ -23,8 +23,8 @@
 			<raw>Hello tree.</raw>
 		</content>
 
-		<node id='3' class='\BaseXMS\RequestHandler\UiComposer'>
-			<accessPaths>
+		<node id='3'>
+			<accessPaths class='\BaseXMS\RequestHandler\UiComposer'>
 				<entry type='main' path='politics' />
 				<entry type='alt' path='politics2' />
 				<entry type='altFull' path='/fips/tests/politics' />
@@ -40,8 +40,8 @@
 			</content>
 		</node>
 
-		<node id='5' class='\BaseXMS\RequestHandler\UiComposer'>
-			<accessPaths>
+		<node id='5'>
+			<accessPaths class='\BaseXMS\RequestHandler\UiComposer'>
 				<entry type='main' path='Halloween' />
 			</accessPaths>
 
@@ -55,8 +55,8 @@
 
 	</node>
 	
-	<node id='4' class='\BaseXMS\RequestHandler\UiComposer'>
-		<accessPaths>
+	<node id='4'>
+		<accessPaths class='\BaseXMS\RequestHandler\UiComposer'>
 			<entry type='main' path='world' />
 			<entry type='alt' path='world2' />
 			<entry type='old' path='welt'>world2</entry>
@@ -68,8 +68,8 @@
 		</content>
 	</node>
 	
-	<node id='6' class='\BaseXMS\RequestHandler\UiComposer'>
-		<accessPaths>
+	<node id='6'>
+		<accessPaths class='\BaseXMS\RequestHandler\UiComposer'>
 			<entry type='main' path='admin' />
 		</accessPaths>
 		
@@ -80,27 +80,12 @@
 			<sort>0000006</sort>
 		</content>
 		
-		<node id='7' path='settings' class='\BaseXMS\RequestHandler\UiComposer'>
-			<accessPaths>
+		<node id='7' path='settings'>
+			<accessPaths class='\BaseXMS\RequestHandler\UiComposer'>
 				<entry type='main' path='settings' />
 			</accessPaths>
 			
 			<content class=''></content>
 		</node>
-		
 	</node>
-
-<!-- Not yet sure about the REST API layer location
-	<node id='8' path='REST' class='\BaseXMS\RequestHandler\UiComposer'>
-		<content class=''></content>
-		
-		<node id='9' path='content' class='\BaseXMS\RequestHandler\UiComposer'>
-			<content class=''></content>
-			
-			<node id='10' path='update' class='\BaseXMS\RequestHandler\UiComposer'>
-				<content class=''></content>
-			</node>
-		</node>
-	</node>
--->
 </node>
